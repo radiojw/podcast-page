@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { AirplayIcon as Spotify, Headphones } from "lucide-react"
+import { Episode } from "../types"
 
-export default function PodcastPlayer({ latestEpisode }) {
+export default function PodcastPlayer({ latestEpisode }: { latestEpisode: Episode }) {
   if (!latestEpisode) {
     return <div className="text-gray-700 p-4">No episode data available</div>
   }

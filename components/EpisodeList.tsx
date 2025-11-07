@@ -1,10 +1,11 @@
 import Link from "next/link"
 import { Calendar, AirplayIcon as Spotify, Headphones } from "lucide-react"
+import { Episode } from "../types"
 
-export default function EpisodeList({ episodes }) {
+export default function EpisodeList({ episodes }: { episodes: Episode[] }) {
   return (
     <div className="space-y-8">
-      {episodes.map((episode) => (
+      {episodes.map((episode: Episode) => (
         <div
           key={episode.guid}
           className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105"

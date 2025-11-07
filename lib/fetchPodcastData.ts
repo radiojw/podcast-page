@@ -30,7 +30,7 @@ export async function fetchPodcastData() {
   try {
     console.log("[podcast] Fetching podcast data from RSS feed...")
     const response = await fetch("https://anchor.fm/s/da593d5c/podcast/rss", {
-      cache: "no-store",
+      next: { revalidate: 3600 }, // Revalidate every hour
       signal: controller.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; WhatIsThisPlace/1.0)",
