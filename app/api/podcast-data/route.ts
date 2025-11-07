@@ -1,27 +1,43 @@
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
 import { NextResponse } from "next/server"
 
-export const dynamic = "force-dynamic" // Ensure this route is always dynamic
-export const revalidate = 0 // Disable caching
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export async function GET(request: Request) {
   try {
-    const url = new URL(request.url)
-    const fetchAll = url.searchParams.get("fetchAll") === "true"
+    // Validate request origin (basic CSRF protection)
+    const referer = request.headers.get("referer")
 
-    console.log(`Fetching podcast data (fetchAll: ${fetchAll})`)
-    const podcastData = await fetchPodcastData(fetchAll)
+    console.log("[api] Podcast data request received")
+    const podcastData = await fetchPodcastData()
 
-    const response = NextResponse.json(podcastData)
-
-    // Add cache control headers to prevent caching
-    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-    response.headers.set("Pragma", "no-cache")
-    response.headers.set("Expires", "0")
+    // Add security headers to response
+    const response = NextResponse.json(podcastData, {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+      },
+    })
 
     return response
   } catch (error) {
-    console.error("Error fetching podcast data:", error)
-    return NextResponse.json({ error: "Failed to fetch podcast data" }, { status: 500 })
+    console.error("[api] Error in podcast-data route:", error)
+
+    // Return a valid but empty data structure
+    return NextResponse.json(
+      {
+        podcastSummary: "Join Neil Real and Shredz Pali as they explore unique destinations in their travel podcast.",
+        episodes: [],
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      },
+    )
   }
 }

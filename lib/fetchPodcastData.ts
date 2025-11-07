@@ -1,15 +1,17 @@
 import { XMLParser } from "fast-xml-parser"
 
+const FETCH_TIMEOUT = 15000 // 15 seconds
+
 function formatText(str: string) {
+  if (!str) return ""
   return str
     .replace(/&#39;/g, "'")
     .replace(/&quot;/g, '"')
     .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
 }
 
 function formatSummary(str: string) {
+  if (!str) return "No description available."
   let formatted = formatText(str)
   formatted = formatted.replace(/<[^>]*>/g, "")
   formatted = formatted.replace(/\s+/g, " ")
@@ -21,38 +23,36 @@ function formatSummary(str: string) {
   return formatted
 }
 
-export async function fetchPodcastData(fetchAll = false) {
-  try {
-    console.log("Fetching podcast data...")
+export async function fetchPodcastData() {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT)
 
-    // Add cache-busting parameter to ensure we get the latest data
-    const timestamp = new Date().getTime()
-    const response = await fetch(`https://anchor.fm/s/da593d5c/podcast/rss?t=${timestamp}`, {
+  try {
+    console.log("[podcast] Fetching podcast data from RSS feed...")
+    const response = await fetch("https://anchor.fm/s/da593d5c/podcast/rss", {
+      cache: "no-store",
+      signal: controller.signal,
       headers: {
-        "User-Agent": "WhatIsThisPlacePodcast/1.0",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
+        "User-Agent": "Mozilla/5.0 (compatible; WhatIsThisPlace/1.0)",
       },
-      cache: "no-store", // Ensure Next.js doesn't cache this request
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const xmlData = await response.text()
-    console.log("RSS feed fetched successfully")
+    console.log("[podcast] RSS feed fetched successfully")
 
     const parser = new XMLParser({
       ignoreAttributes: false,
       attributeNamePrefix: "@_",
-      parseAttributeValue: true,
-      trimValues: true,
     })
 
     const result = parser.parse(xmlData)
-    console.log("RSS feed parsed successfully")
+    console.log("[podcast] RSS feed parsed successfully")
 
     if (!result.rss || !result.rss.channel) {
       throw new Error("Invalid RSS feed structure")
@@ -60,45 +60,45 @@ export async function fetchPodcastData(fetchAll = false) {
 
     const podcastSummary = formatSummary(result.rss.channel["itunes:summary"] || result.rss.channel.description || "")
 
-    const mainImageUrl = result.rss.channel["itunes:image"]?.["@_href"]
-    console.log("Main podcast image URL:", mainImageUrl)
-
     // Ensure we have an array of items
     const items = Array.isArray(result.rss.channel.item) ? result.rss.channel.item : [result.rss.channel.item]
 
-    const allEpisodes = items
-      .filter((item) => item && item.title) // Filter out any invalid items
-      .map((item: any) => {
-        console.log("Processing episode:", item.title)
-        const episodeImageUrl = item["itunes:image"]?.["@_href"] || mainImageUrl
-        console.log("Episode image URL:", episodeImageUrl)
+    const episodes = items.slice(0, 5).map((item: any) => {
+      return {
+        title: formatText(item.title),
+        pubDate: item.pubDate,
+        link: item.link,
+        guid: typeof item.guid === "string" ? item.guid : item.guid?.["#text"] || `episode-${Date.now()}`,
+        summary: formatSummary(item["itunes:summary"] || item.description || ""),
+        enclosure: item.enclosure
+          ? {
+              url: item.enclosure["@_url"] || "",
+              type: item.enclosure["@_type"] || "",
+              length: item.enclosure["@_length"] || "",
+            }
+          : null,
+      }
+    })
 
-        return {
-          title: formatText(item.title),
-          pubDate: item.pubDate,
-          link: item.link,
-          guid: item.guid?.["#text"] || item.guid || `episode-${Date.now()}-${Math.random()}`,
-          summary: formatSummary(item["itunes:summary"] || item.description || ""),
-          enclosure: item.enclosure
-            ? {
-                url: item.enclosure["@_url"] || "",
-                type: item.enclosure["@_type"] || "",
-                length: item.enclosure["@_length"] || "",
-              }
-            : null,
-          imageUrl: episodeImageUrl,
-        }
-      })
-      .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()) // Sort by date, newest first
-
-    const episodes = fetchAll ? allEpisodes : allEpisodes.slice(0, 3)
-
-    console.log(`Processed ${episodes.length} episodes (total available: ${allEpisodes.length})`)
-    console.log("Latest episode:", episodes[0]?.title)
-
+    console.log(`[podcast] Successfully processed ${episodes.length} episodes`)
     return { podcastSummary, episodes }
   } catch (error) {
-    console.error("Error fetching podcast data:", error)
-    throw error
+    clearTimeout(timeoutId)
+
+    if (error instanceof Error) {
+      if (error.name === "AbortError") {
+        console.error("[podcast] Request timeout while fetching RSS feed")
+      } else {
+        console.error("[podcast] Error fetching podcast data:", error.message)
+      }
+    } else {
+      console.error("[podcast] Unknown error fetching podcast data")
+    }
+
+    // Return empty data structure instead of throwing
+    return {
+      podcastSummary: "Join Neil Real and Shredz Pali as they explore unique destinations in their travel podcast.",
+      episodes: [],
+    }
   }
 }
