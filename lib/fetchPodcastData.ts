@@ -1,104 +1,185 @@
 import { XMLParser } from "fast-xml-parser"
+import type { Episode, PodcastData } from "../types"
 
-const FETCH_TIMEOUT = 15000 // 15 seconds
+const FETCH_TIMEOUT = 15000
+const RSS_URL = "https://anchor.fm/s/da593d5c/podcast/rss"
+const FALLBACK_SUMMARY = "Join Neil Real and Shredz Pali as they explore unique destinations in their travel podcast."
+const ALLOWED_LINK_HOSTS = new Set(["anchor.fm", "podcasters.spotify.com", "open.spotify.com", "spotify.com"])
+const ALLOWED_AUDIO_HOSTS = new Set(["anchor.fm", "d3t3ozftmdmh3i.cloudfront.net", "chtbl.com"])
 
-function formatText(str: string) {
-  if (!str) return ""
-  return str
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, "&")
-}
-
-function formatSummary(str: string) {
-  if (!str) return "No description available."
-  let formatted = formatText(str)
-  formatted = formatted.replace(/<[^>]*>/g, "")
-  formatted = formatted.replace(/\s+/g, " ")
-  formatted = formatted.trim()
-  formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1)
-  if (!formatted.endsWith(".")) {
-    formatted += "."
+type RssItem = {
+  title?: unknown
+  pubDate?: unknown
+  link?: unknown
+  guid?: unknown
+  description?: unknown
+  "itunes:summary"?: unknown
+  enclosure?: {
+    "@_url"?: unknown
+    "@_type"?: unknown
+    "@_length"?: unknown
   }
-  return formatted
 }
 
-export async function fetchPodcastData() {
+type ParsedRss = {
+  rss?: {
+    channel?: {
+      description?: unknown
+      "itunes:summary"?: unknown
+      item?: RssItem | RssItem[]
+    }
+  }
+}
+
+function getText(value: unknown) {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value)
+  }
+
+  if (value && typeof value === "object" && "#text" in value) {
+    return getText((value as { "#text"?: unknown })["#text"])
+  }
+
+  return ""
+}
+
+function decodeHtmlEntities(value: string) {
+  let decoded = value
+
+  for (let pass = 0; pass < 2; pass += 1) {
+    decoded = decoded
+      .replace(/&amp;/g, "&")
+      .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
+      .replace(/&#x([a-f0-9]+);/gi, (_, code: string) => String.fromCharCode(Number.parseInt(code, 16)))
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+  }
+
+  return decoded
+}
+
+function formatText(value: unknown) {
+  return decodeHtmlEntities(getText(value)).trim()
+}
+
+function formatSummary(value: unknown) {
+  const text = formatText(value)
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  if (!text) {
+    return "No description available."
+  }
+
+  const formatted = text.charAt(0).toUpperCase() + text.slice(1)
+  return /[.!?]$/.test(formatted) ? formatted : `${formatted}.`
+}
+
+function safeHttpsUrl(value: unknown, allowedHosts?: Set<string>) {
+  const text = formatText(value)
+
+  if (!text) {
+    return ""
+  }
+
+  try {
+    const url = new URL(text)
+
+    if (url.protocol !== "https:") {
+      return ""
+    }
+
+    if (allowedHosts && !allowedHosts.has(url.hostname.toLowerCase())) {
+      return ""
+    }
+
+    return url.toString()
+  } catch {
+    return ""
+  }
+}
+
+function parseGuid(value: unknown, fallbackIndex: number) {
+  const guid = formatText(value)
+  return guid || `episode-${fallbackIndex}`
+}
+
+function parseEpisode(item: RssItem, index: number): Episode {
+  const enclosureUrl = safeHttpsUrl(item.enclosure?.["@_url"], ALLOWED_AUDIO_HOSTS)
+  const enclosureType = formatText(item.enclosure?.["@_type"])
+
+  return {
+    title: formatText(item.title) || "Untitled episode",
+    pubDate: formatText(item.pubDate),
+    link: safeHttpsUrl(item.link, ALLOWED_LINK_HOSTS) || "https://open.spotify.com/show/0bH1fyMB2MDdK8x2WAd7Uo",
+    guid: parseGuid(item.guid, index),
+    summary: formatSummary(item["itunes:summary"] || item.description),
+    enclosure: enclosureUrl
+      ? {
+          url: enclosureUrl,
+          type: enclosureType.startsWith("audio/") ? enclosureType : "audio/mpeg",
+          length: formatText(item.enclosure?.["@_length"]),
+        }
+      : null,
+  }
+}
+
+export async function fetchPodcastData(): Promise<PodcastData> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT)
 
   try {
-    console.log("[podcast] Fetching podcast data from RSS feed...")
-    const response = await fetch("https://anchor.fm/s/da593d5c/podcast/rss", {
-      next: { revalidate: 3600 }, // Revalidate every hour
+    const response = await fetch(RSS_URL, {
+      next: { revalidate: 3600 },
       signal: controller.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; WhatIsThisPlace/1.0)",
       },
     })
 
-    clearTimeout(timeoutId)
-
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`RSS feed returned ${response.status}`)
     }
 
     const xmlData = await response.text()
-    console.log("[podcast] RSS feed fetched successfully")
-
     const parser = new XMLParser({
       ignoreAttributes: false,
       attributeNamePrefix: "@_",
+      processEntities: false,
+      stopNodes: ["*.script", "*.style"],
     })
+    const result = parser.parse(xmlData) as ParsedRss
+    const channel = result.rss?.channel
 
-    const result = parser.parse(xmlData)
-    console.log("[podcast] RSS feed parsed successfully")
-
-    if (!result.rss || !result.rss.channel) {
+    if (!channel) {
       throw new Error("Invalid RSS feed structure")
     }
 
-    const podcastSummary = formatSummary(result.rss.channel["itunes:summary"] || result.rss.channel.description || "")
+    const rawItems = Array.isArray(channel.item) ? channel.item : channel.item ? [channel.item] : []
+    const episodes = rawItems.slice(0, 5).map(parseEpisode)
 
-    // Ensure we have an array of items
-    const items = Array.isArray(result.rss.channel.item) ? result.rss.channel.item : [result.rss.channel.item]
-
-    const episodes = items.slice(0, 5).map((item: any) => {
-      return {
-        title: formatText(item.title),
-        pubDate: item.pubDate,
-        link: item.link,
-        guid: typeof item.guid === "string" ? item.guid : item.guid?.["#text"] || `episode-${Date.now()}`,
-        summary: formatSummary(item["itunes:summary"] || item.description || ""),
-        enclosure: item.enclosure
-          ? {
-              url: item.enclosure["@_url"] || "",
-              type: item.enclosure["@_type"] || "",
-              length: item.enclosure["@_length"] || "",
-            }
-          : null,
-      }
-    })
-
-    console.log(`[podcast] Successfully processed ${episodes.length} episodes`)
-    return { podcastSummary, episodes }
+    return {
+      podcastSummary: formatSummary(channel["itunes:summary"] || channel.description || FALLBACK_SUMMARY),
+      episodes,
+    }
   } catch (error) {
-    clearTimeout(timeoutId)
-
     if (error instanceof Error) {
-      if (error.name === "AbortError") {
-        console.error("[podcast] Request timeout while fetching RSS feed")
-      } else {
-        console.error("[podcast] Error fetching podcast data:", error.message)
-      }
+      console.error("[podcast] RSS fetch failed:", error.message)
     } else {
-      console.error("[podcast] Unknown error fetching podcast data")
+      console.error("[podcast] RSS fetch failed with an unknown error")
     }
 
-    // Return empty data structure instead of throwing
     return {
-      podcastSummary: "Join Neil Real and Shredz Pali as they explore unique destinations in their travel podcast.",
+      podcastSummary: FALLBACK_SUMMARY,
       episodes: [],
     }
+  } finally {
+    clearTimeout(timeoutId)
   }
 }

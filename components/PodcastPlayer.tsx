@@ -1,49 +1,54 @@
 "use client"
 
-import Link from "next/link"
 import { AirplayIcon as Spotify, Headphones } from "lucide-react"
-import { Episode } from "../types"
+import Link from "next/link"
+import type { Episode } from "../types"
+
+const applePodcastUrl = "https://podcasts.apple.com/us/podcast/what-is-this-place-travel-talk-radio/id1661457126?uo=4"
+const spotifyShowUrl = "https://open.spotify.com/show/0bH1fyMB2MDdK8x2WAd7Uo"
 
 export default function PodcastPlayer({ latestEpisode }: { latestEpisode: Episode }) {
   if (!latestEpisode) {
-    return <div className="text-gray-700 p-4">No episode data available</div>
+    return <div className="rounded-md bg-white p-6 text-[#4b4038]">No episode data available.</div>
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">Latest Episode</h2>
-      <h3 className="text-xl font-medium mb-4 text-gray-700">{latestEpisode.title}</h3>
-      <p className="text-gray-600 mb-6 leading-relaxed">{latestEpisode.summary}</p>
+    <section aria-labelledby="latest-episode" className="rounded-md border border-[#d8d1c7] bg-white p-6 shadow-sm">
+      <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#2a6f62]">Latest Episode</p>
+      <h2 id="latest-episode" className="mt-2 text-2xl font-black text-[#17130f]">
+        {latestEpisode.title}
+      </h2>
+      <p className="mt-4 text-[#4b4038] leading-relaxed">{latestEpisode.summary}</p>
 
-      {latestEpisode.enclosure?.url && (
-        <div className="mb-6">
-          <audio controls className="w-full">
-            <source src={latestEpisode.enclosure.url} type="audio/mpeg" />
+      {latestEpisode.enclosure?.url ? (
+        <div className="mt-6">
+          <audio controls preload="none" className="w-full" aria-label={`Play ${latestEpisode.title}`}>
+            <source src={latestEpisode.enclosure.url} type={latestEpisode.enclosure.type || "audio/mpeg"} />
             Your browser does not support the audio element.
           </audio>
         </div>
-      )}
+      ) : null}
 
-      <div className="flex flex-wrap gap-4">
+      <div className="mt-6 flex flex-wrap gap-3">
         <Link
-          href={latestEpisode.link || "https://open.spotify.com/show/0bH1fyMB2MDdK8x2WAd7Uo"}
+          href={latestEpisode.link || spotifyShowUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors duration-300"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#2a6f62] px-4 py-2 font-bold text-white transition-colors hover:bg-[#21574d] focus:outline-none focus:ring-2 focus:ring-[#e9c46a] focus:ring-offset-2"
         >
-          <Spotify className="w-5 h-5 mr-2" />
+          <Spotify className="h-5 w-5" aria-hidden="true" />
           Listen on Spotify
         </Link>
         <Link
-          href={`https://podcasts.apple.com/us/podcast/what-is-this-place-travel-talk-radio/id1661457126?uo=4`}
+          href={applePodcastUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors duration-300"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#5f4bb6] px-4 py-2 font-bold text-white transition-colors hover:bg-[#4d3b94] focus:outline-none focus:ring-2 focus:ring-[#e9c46a] focus:ring-offset-2"
         >
-          <Headphones className="w-5 h-5 mr-2" />
+          <Headphones className="h-5 w-5" aria-hidden="true" />
           Listen on Apple Podcasts
         </Link>
       </div>
-    </div>
+    </section>
   )
 }
