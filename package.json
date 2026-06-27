@@ -5,7 +5,6 @@
   "scripts": {
     "prebuild": "node scripts/clean-public-next.mjs",
     "build": "next build",
-    "postbuild": "node scripts/copy-static-assets.mjs",
     "dev": "next dev",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
