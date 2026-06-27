@@ -41,12 +41,52 @@ export default async function Home() {
   const podcastData = await fetchPodcastData()
 
   const coverArt = podcastData.podcastImage || FALLBACK_COVER_ART
-  const latestEpisode = podcastData.episodes[0]
+  const latestEpisode = [...podcastData.episodes].sort(
+    (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
+  )[0]
   const primaryCategory = podcastData.podcastCategories?.at(-1)
   const feedUpdated = formatFeedDate(podcastData.lastBuildDate)
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "PodcastSeries",
+    "name": podcastData.podcastTitle,
+    "description": podcastData.podcastSummary,
+    "url": "https://whatisthisplace.org",
+    "image": coverArt,
+    "author": {
+      "@type": "Person",
+      "name": "Neil Real & Shredz Pali"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Neil Real & Shredz Pali"
+    },
+    "webFeed": podcastData.feedUrl || "https://anchor.fm/s/da593d5c/podcast/rss",
+    "hasPart": podcastData.episodes.map((ep) => ({
+      "@type": "PodcastEpisode",
+      "name": ep.title,
+      "description": ep.summary,
+      "datePublished": ep.pubDate,
+      "url": ep.link,
+      ...(ep.enclosure
+        ? {
+            "associatedMedia": {
+              "@type": "MediaObject",
+              "contentUrl": ep.enclosure.url,
+              "contentType": ep.enclosure.type,
+            },
+          }
+        : {}),
+    })),
+  }
+
   return (
     <div className="min-h-screen bg-brand-cream text-zinc-900 selection:bg-brand-gold selection:text-brand-forest-dark">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <section className="relative overflow-hidden bg-brand-forest-dark text-white">
         {/* Blurred cover art atmosphere from RSS */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">

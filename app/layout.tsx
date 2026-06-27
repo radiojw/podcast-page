@@ -3,7 +3,7 @@ import type React from "react"
 import { Analytics } from "@vercel/analytics/react"
 import { Fraunces, Source_Sans_3 } from "next/font/google"
 import Footer from "@/components/Footer"
-import { RSS_URL } from "@/lib/rssConstants"
+import { RSS_URL, FALLBACK_COVER_ART } from "@/lib/rssConstants"
 import "./globals.css"
 
 const fraunces = Fraunces({
@@ -18,7 +18,7 @@ const sourceSans = Source_Sans_3({
   display: "swap",
 })
 
-const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://whatisthisplace.com"
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://whatisthisplace.org"
 
 const getBaseUrl = () => {
   if (!SITE_URL.startsWith("http://") && !SITE_URL.startsWith("https://")) {
@@ -30,7 +30,7 @@ const getBaseUrl = () => {
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
-  title: "What Is This Place w/ Neil Real and Shredz Pali - Travel Podcast",
+  title: "What Is This Place? w/ Neil Real and Shredz Pali - Travel Podcast",
   description:
     "Join Neil Real and Shredz Pali as they explore unique destinations in their travel podcast, What Is This Place.",
   keywords: [
@@ -41,6 +41,7 @@ export const metadata: Metadata = {
     "Shredz Pali",
     "travel stories",
     "adventure podcast",
+    "what is this place",
   ],
   authors: [{ name: "Neil Real and Shredz Pali" }],
   alternates: {
@@ -50,16 +51,25 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "What Is This Place w/ Neil Real and Shredz Pali",
-    description: "Join Neil Real and Shredz Pali as they explore unique destinations.",
+    title: "What Is This Place? w/ Neil Real and Shredz Pali",
+    description: "Join Neil Real and Shredz Pali as they explore unique destinations in their travel podcast.",
     type: "website",
     url: getBaseUrl(),
-    siteName: "What Is This Place",
+    siteName: "What Is This Place? Travel Talk Radio",
+    images: [
+      {
+        url: FALLBACK_COVER_ART,
+        width: 1400,
+        height: 1400,
+        alt: "What Is This Place? Podcast Cover Art",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
-    title: "What Is This Place w/ Neil Real and Shredz Pali",
+    card: "summary_large_image",
+    title: "What Is This Place? w/ Neil Real and Shredz Pali",
     description: "Travel talk radio with Neil Real and Shredz Pali.",
+    images: [FALLBACK_COVER_ART],
   },
 }
 
