@@ -14,11 +14,14 @@
   "dependencies": {
     "@tailwindcss/line-clamp": "0.4.4",
     "@vercel/analytics": "1.6.1",
-    "fast-xml-parser": "5.5.11",
+    "fast-xml-parser": "5.9.3",
     "lucide-react": "0.468.0",
-    "next": "16.2.3",
+    "next": "16.2.9",
     "react": "19.2.5",
     "react-dom": "19.2.5"
+  },
+  "overrides": {
+    "postcss": "8.5.15"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
@@ -27,8 +30,8 @@
     "@types/react-dom": "19.2.3",
     "autoprefixer": "10.4.27",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.3",
-    "postcss": "8.5.9",
+    "eslint-config-next": "16.2.9",
+    "postcss": "8.5.15",
     "tailwindcss": "3.4.19",
     "typescript": "5.9.3",
     "typescript-eslint": "8.58.1"
