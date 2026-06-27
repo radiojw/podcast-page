@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import Image from "next/image"
 import { Search, Sparkles, AlertCircle, Play, Pause, Calendar, Clock, X } from "lucide-react"
 import EpisodeList from "./EpisodeList"
 import PodcastPlayer from "./PodcastPlayer"
@@ -78,10 +79,13 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
         <section aria-labelledby="featured-heading" className="mb-14">
           <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-card transition-shadow duration-300 hover:shadow-card-hover">
             {featuredImage && (
-              <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-                <div
-                  className="absolute inset-0 scale-110 bg-cover bg-center opacity-[0.07] blur-2xl"
-                  style={{ backgroundImage: `url(${featuredImage})` }}
+              <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+                <Image
+                  src={featuredImage}
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  className="hero-art-blur scale-110 object-cover opacity-[0.07]"
                 />
               </div>
             )}

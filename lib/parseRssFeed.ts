@@ -302,6 +302,8 @@ export function parseRssFeed(xmlData: string): PodcastData {
     processEntities: false,
     stopNodes: ["*.script", "*.style"],
     cdataPropName: "#text",
+    maxNestedTags: 100,
+    allowBooleanAttributes: true,
   })
 
   const result = parser.parse(xmlData) as ParsedRss
