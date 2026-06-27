@@ -3,6 +3,7 @@ import type React from "react"
 import { Analytics } from "@vercel/analytics/react"
 import { Fraunces, Source_Sans_3 } from "next/font/google"
 import Footer from "@/components/Footer"
+import { RSS_URL } from "@/lib/rssConstants"
 import "./globals.css"
 
 const fraunces = Fraunces({
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
     types: {
-      "application/rss+xml": "https://anchor.fm/s/da593d5c/podcast/rss",
+      "application/rss+xml": RSS_URL,
     },
   },
   openGraph: {

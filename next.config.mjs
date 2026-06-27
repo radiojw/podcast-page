@@ -25,10 +25,30 @@ const nextConfig = {
     ],
   },
   async headers() {
+    const cspHeader = `
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' blob: data: d3t3ozftmdmh3i.cloudfront.net anchor.fm i.scdn.co is1-ssl.mzstatic.com content.production.cdn.art19.com media.npr.org f.prxu.org assets.pippa.io megaphone.imgix.net static.megaphone.fm;
+      media-src 'self' blob: data: anchor.fm d3t3ozftmdmh3i.cloudfront.net chtbl.com;
+      connect-src 'self';
+      font-src 'self';
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      block-all-mixed-content;
+      upgrade-insecure-requests;
+    `.replace(/\s{2,}/g, " ").trim()
+
     return [
       {
         source: "/:path*",
         headers: [
+          {
+            key: "Content-Security-Policy",
+            value: cspHeader,
+          },
           {
             key: "X-Content-Type-Options",
             value: "nosniff",

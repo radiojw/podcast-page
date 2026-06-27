@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, Sparkles, AlertCircle, Play, Pause, Calendar, Clock } from "lucide-react"
+import { Search, Sparkles, AlertCircle, Play, Pause, Calendar, Clock, X } from "lucide-react"
 import EpisodeList from "./EpisodeList"
 import PodcastPlayer from "./PodcastPlayer"
 import EpisodeCover from "./EpisodeCover"
-import { formatEpisodeDate, formatDuration } from "@/lib/formatEpisode"
+import EpisodeSummary from "./EpisodeSummary"
+import { formatEpisodeDate, formatDuration, formatFileSize, getEpisodeLabel } from "@/lib/formatEpisode"
 import type { PodcastData, Episode } from "../types"
 
 export default function PodcastFeed({ initialData: podcastData }: { initialData: PodcastData }) {
@@ -36,10 +37,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
 
   const latestEpisode = useMemo(() => {
     if (podcastData.episodes.length === 0) return null
-    const sorted = [...podcastData.episodes].sort(
-      (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-    )
-    return sorted[0]
+    return podcastData.episodes[0]
   }, [podcastData.episodes])
 
   const listEpisodes = useMemo(() => {
@@ -108,6 +106,11 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
 
               <div className="flex flex-col justify-center pr-0 lg:pr-8">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  {getEpisodeLabel(latestEpisode) && (
+                    <span className="rounded-full bg-brand-forest/8 px-2.5 py-1 text-brand-forest">
+                      {getEpisodeLabel(latestEpisode)}
+                    </span>
+                  )}
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" />
                     <time dateTime={latestEpisode.pubDate}>
@@ -120,18 +123,37 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
                       <span>{formatDuration(latestEpisode.duration)}</span>
                     </span>
                   )}
+                  {latestEpisode.enclosure?.length && (
+                    <span>{formatFileSize(latestEpisode.enclosure.length)}</span>
+                  )}
                 </div>
 
-                <h2
+                 <h2
                   id="featured-heading"
-                  className="mt-4 font-display text-balance text-2xl font-semibold leading-tight text-zinc-950 sm:text-3xl"
+                  className="mt-4 font-display text-balance text-2xl font-semibold leading-tight text-zinc-950 sm:text-3xl flex items-start gap-3 justify-between"
                 >
-                  {latestEpisode.title}
+                  <span className="flex-grow">{latestEpisode.title}</span>
+                  {isLatestPlaying && (
+                    <span className="mt-2 flex items-end gap-0.5 h-4 px-1 text-brand-gold shrink-0" aria-hidden="true">
+                      <span className="eq-bar eq-bar-1" />
+                      <span className="eq-bar eq-bar-2" />
+                      <span className="eq-bar eq-bar-3" />
+                    </span>
+                  )}
                 </h2>
 
-                <p className="mt-4 line-clamp-4 text-sm leading-relaxed text-zinc-600 sm:text-base">
-                  {latestEpisode.summary}
-                </p>
+                {latestEpisode.subtitle && (
+                  <p className="mt-2 text-sm font-medium text-zinc-500">{latestEpisode.subtitle}</p>
+                )}
+
+                <div className="mt-4 sm:text-base">
+                  <EpisodeSummary
+                    summary={latestEpisode.summary}
+                    preview={latestEpisode.summaryPreview}
+                    className="text-sm leading-relaxed text-zinc-600 sm:text-base"
+                    clampClassName=""
+                  />
+                </div>
 
                 <div className="mt-7">
                   <button
@@ -178,8 +200,18 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
               placeholder="Search episodes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-full border border-zinc-200 bg-white py-2.5 pl-10 pr-4 text-sm text-zinc-800 shadow-sm placeholder:text-zinc-400 focus:border-brand-forest focus:outline-none focus:ring-2 focus:ring-brand-forest/20"
+              className="w-full rounded-full border border-zinc-200 bg-white py-2.5 pl-10 pr-10 text-sm text-zinc-800 shadow-sm placeholder:text-zinc-400 focus:border-brand-forest focus:outline-none focus:ring-2 focus:ring-brand-forest/20"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 focus:outline-none"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           <select

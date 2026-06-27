@@ -85,3 +85,30 @@ input[type="range"]::-moz-range-thumb {
 ::-webkit-scrollbar-thumb:hover {
   background: #b8b1a5;
 }
+
+/* Equalizer animations */
+@keyframes eq-bounce-1 {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+@keyframes eq-bounce-2 {
+  0%, 100% { transform: scaleY(0.7); }
+  50% { transform: scaleY(0.2); }
+}
+@keyframes eq-bounce-3 {
+  0%, 100% { transform: scaleY(0.45); }
+  50% { transform: scaleY(0.9); }
+}
+
+.eq-bar {
+  display: inline-block;
+  width: 2.5px;
+  height: 12px;
+  background-color: currentColor;
+  transform-origin: bottom;
+  border-radius: 1px;
+}
+
+.eq-bar-1 { animation: eq-bounce-1 0.8s ease-in-out infinite; }
+.eq-bar-2 { animation: eq-bounce-2 0.75s ease-in-out infinite 0.15s; }
+.eq-bar-3 { animation: eq-bounce-3 0.85s ease-in-out infinite 0.3s; }

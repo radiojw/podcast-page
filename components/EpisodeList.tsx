@@ -4,7 +4,13 @@ import { useState } from "react"
 import { Play, Pause, Calendar, Clock, Share2, Check, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import EpisodeCover from "./EpisodeCover"
-import { formatEpisodeDate, formatDuration, extractEpisodeNumber } from "@/lib/formatEpisode"
+import EpisodeSummary from "./EpisodeSummary"
+import {
+  formatEpisodeDate,
+  formatDuration,
+  formatFileSize,
+  getEpisodeLabel,
+} from "@/lib/formatEpisode"
 import type { Episode } from "../types"
 
 interface EpisodeListProps {
@@ -42,7 +48,7 @@ export default function EpisodeList({
         const isCurrent = activeEpisode?.guid === episode.guid
         const isCurrentPlaying = isCurrent && isPlaying
         const displayImage = episode.imageUrl || podcastImage
-        const episodeNumber = extractEpisodeNumber(episode.title)
+        const episodeLabel = getEpisodeLabel(episode)
 
         return (
           <article
@@ -70,9 +76,9 @@ export default function EpisodeList({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    {episodeNumber && (
+                    {episodeLabel && (
                       <span className="rounded-full bg-brand-forest/8 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-forest">
-                        Ep. {episodeNumber}
+                        {episodeLabel}
                       </span>
                     )}
                     <span className="flex items-center gap-1 text-xs text-zinc-500">
@@ -85,17 +91,29 @@ export default function EpisodeList({
                         <span>{formatDuration(episode.duration)}</span>
                       </span>
                     )}
+                    {episode.enclosure?.length && (
+                      <span className="text-xs text-zinc-500">
+                        {formatFileSize(episode.enclosure.length)}
+                      </span>
+                    )}
                   </div>
 
-                  <h3 className="mt-2 font-display text-base font-semibold leading-snug text-zinc-900 transition-colors group-hover:text-brand-forest sm:text-lg">
-                    {episode.title}
+                  <h3 className="mt-2 font-display text-base font-semibold leading-snug text-zinc-900 transition-colors group-hover:text-brand-forest sm:text-lg flex items-start gap-2 justify-between">
+                    <span className="flex-grow">{episode.title}</span>
+                    {isCurrentPlaying && (
+                      <span className="mt-1.5 flex items-end gap-0.5 h-3.5 px-1 text-brand-gold shrink-0" aria-hidden="true">
+                        <span className="eq-bar eq-bar-1" />
+                        <span className="eq-bar eq-bar-2" />
+                        <span className="eq-bar eq-bar-3" />
+                      </span>
+                    )}
                   </h3>
                 </div>
               </div>
 
-              <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-zinc-600">
-                {episode.summary}
-              </p>
+              <div className="mt-3 flex-1">
+                <EpisodeSummary summary={episode.summary} preview={episode.summaryPreview} />
+              </div>
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 pt-4">
                 <div className="flex flex-wrap items-center gap-2">
@@ -155,6 +173,13 @@ export default function EpisodeList({
           </article>
         )
       })}
+
+      {copiedId && (
+        <div className="fixed bottom-28 left-6 z-50 flex items-center gap-2 rounded-xl bg-zinc-950/95 border border-white/10 px-4 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <Check className="h-4 w-4 text-brand-gold" />
+          <span>Episode link copied to clipboard!</span>
+        </div>
+      )}
     </div>
   )
 }

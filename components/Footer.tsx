@@ -2,6 +2,7 @@ import { Rss } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
+import { RSS_URL } from "@/lib/rssConstants"
 
 const links = [
   {
@@ -46,7 +47,7 @@ export default async function Footer() {
             </Link>
           ))}
           <Link
-            href="https://anchor.fm/s/da593d5c/podcast/rss"
+            href={RSS_URL}
             className="text-brand-gold-light transition-colors hover:text-brand-gold focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-ink"
             target="_blank"
             rel="noopener noreferrer"

@@ -131,7 +131,16 @@ export default function PodcastPlayer({
               className="shrink-0 ring-1 ring-white/10"
             />
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-bold text-white">{activeEpisode.title}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="truncate text-sm font-bold text-white">{activeEpisode.title}</h3>
+                {isPlaying && (
+                  <span className="flex items-end gap-0.5 h-3 px-1 text-brand-gold shrink-0" aria-hidden="true">
+                    <span className="eq-bar eq-bar-1" />
+                    <span className="eq-bar eq-bar-2" />
+                    <span className="eq-bar eq-bar-3" />
+                  </span>
+                )}
+              </div>
               <p className="mt-0.5 truncate text-xs text-zinc-400">What Is This Place</p>
             </div>
           </div>

@@ -2,8 +2,9 @@ import Link from "next/link"
 import Image from "next/image"
 import PodcastFeed from "@/components/PodcastFeed"
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
-import { formatEpisodeDate } from "@/lib/formatEpisode"
-import { MapPin, Mic2, Radio } from "lucide-react"
+import { formatEpisodeDate, formatFeedDate } from "@/lib/formatEpisode"
+import { FALLBACK_COVER_ART } from "@/lib/rssConstants"
+import { MapPin, Mic2, Radio, Rss } from "lucide-react"
 
 const podcastLinks = [
   {
@@ -39,13 +40,10 @@ function PlatformIcon({ icon }: { icon: string }) {
 export default async function Home() {
   const podcastData = await fetchPodcastData()
 
-  const fallbackCoverArt =
-    "https://d3t3ozftmdmh3i.cloudfront.net/staging/podcast_uploaded_nologo/36532815/0dbb8f8a71dd4b7c.jpeg"
-  const coverArt = podcastData.podcastImage || fallbackCoverArt
-
-  const latestEpisode = [...podcastData.episodes].sort(
-    (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-  )[0]
+  const coverArt = podcastData.podcastImage || FALLBACK_COVER_ART
+  const latestEpisode = podcastData.episodes[0]
+  const primaryCategory = podcastData.podcastCategories?.at(-1)
+  const feedUpdated = formatFeedDate(podcastData.lastBuildDate)
 
   return (
     <div className="min-h-screen bg-brand-cream text-zinc-900 selection:bg-brand-gold selection:text-brand-forest-dark">
@@ -92,15 +90,26 @@ export default async function Home() {
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                {podcastData.episodeCount > 0 && (
+                {primaryCategory && (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200">
                     <MapPin className="h-3.5 w-3.5 text-brand-gold" />
+                    {primaryCategory}
+                  </span>
+                )}
+                {podcastData.episodeCount > 0 && (
+                  <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200">
                     {podcastData.episodeCount} episodes
                   </span>
                 )}
                 {latestEpisode && (
                   <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200">
                     Latest: {formatEpisodeDate(latestEpisode.pubDate)}
+                  </span>
+                )}
+                {feedUpdated && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200">
+                    <Rss className="h-3.5 w-3.5 text-brand-gold" />
+                    Feed updated {feedUpdated}
                   </span>
                 )}
               </div>
