@@ -1,11 +1,21 @@
 import type { Metadata } from "next"
 import type React from "react"
 import { Analytics } from "@vercel/analytics/react"
-import { Inter } from "next/font/google"
+import { Fraunces, Source_Sans_3 } from "next/font/google"
 import Footer from "@/components/Footer"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] })
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+})
+
+const sourceSans = Source_Sans_3({
+  subsets: ["latin"],
+  variable: "--font-source-sans",
+  display: "swap",
+})
 
 const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://whatisthisplace.com"
 
@@ -59,7 +69,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} flex min-h-screen flex-col antialiased`}>
+      <body className={`${fraunces.variable} ${sourceSans.variable} font-sans flex min-h-screen flex-col antialiased`}>
         <main className="flex-grow">{children}</main>
         <Footer />
         <Analytics />

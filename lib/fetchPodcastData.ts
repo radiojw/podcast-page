@@ -3,9 +3,22 @@ import type { Episode, PodcastData } from "../types"
 
 const FETCH_TIMEOUT = 15000
 const RSS_URL = "https://anchor.fm/s/da593d5c/podcast/rss"
+const FALLBACK_TITLE = "What Is This Place"
 const FALLBACK_SUMMARY = "Join Neil Real and Shredz Pali as they explore unique destinations in their travel podcast."
 const ALLOWED_LINK_HOSTS = new Set(["anchor.fm", "podcasters.spotify.com", "open.spotify.com", "spotify.com"])
 const ALLOWED_AUDIO_HOSTS = new Set(["anchor.fm", "d3t3ozftmdmh3i.cloudfront.net", "chtbl.com"])
+const ALLOWED_IMAGE_HOSTS = new Set([
+  "d3t3ozftmdmh3i.cloudfront.net",
+  "anchor.fm",
+  "i.scdn.co",
+  "is1-ssl.mzstatic.com",
+  "content.production.cdn.art19.com",
+  "media.npr.org",
+  "f.prxu.org",
+  "assets.pippa.io",
+  "megaphone.imgix.net",
+  "static.megaphone.fm",
+])
 
 type RssItem = {
   title?: unknown
@@ -14,6 +27,10 @@ type RssItem = {
   guid?: unknown
   description?: unknown
   "itunes:summary"?: unknown
+  "itunes:image"?: {
+    "@_href"?: unknown
+  }
+  "itunes:duration"?: unknown
   enclosure?: {
     "@_url"?: unknown
     "@_type"?: unknown
@@ -24,8 +41,15 @@ type RssItem = {
 type ParsedRss = {
   rss?: {
     channel?: {
+      title?: unknown
       description?: unknown
       "itunes:summary"?: unknown
+      image?: {
+        url?: unknown
+      }
+      "itunes:image"?: {
+        "@_href"?: unknown
+      }
       item?: RssItem | RssItem[]
     }
   }
@@ -113,6 +137,8 @@ function parseGuid(value: unknown, fallbackIndex: number) {
 function parseEpisode(item: RssItem, index: number): Episode {
   const enclosureUrl = safeHttpsUrl(item.enclosure?.["@_url"], ALLOWED_AUDIO_HOSTS)
   const enclosureType = formatText(item.enclosure?.["@_type"])
+  const imageUrl = safeHttpsUrl(item["itunes:image"]?.["@_href"], ALLOWED_IMAGE_HOSTS)
+  const duration = formatText(item["itunes:duration"])
 
   return {
     title: formatText(item.title) || "Untitled episode",
@@ -127,6 +153,8 @@ function parseEpisode(item: RssItem, index: number): Episode {
           length: formatText(item.enclosure?.["@_length"]),
         }
       : null,
+    imageUrl: imageUrl || undefined,
+    duration: duration || undefined,
   }
 }
 
@@ -162,10 +190,16 @@ export async function fetchPodcastData(): Promise<PodcastData> {
     }
 
     const rawItems = Array.isArray(channel.item) ? channel.item : channel.item ? [channel.item] : []
-    const episodes = rawItems.slice(0, 5).map(parseEpisode)
+    const episodes = rawItems.map((item, index) => parseEpisode(item, index))
+    const podcastImage = safeHttpsUrl(channel.image?.url || channel["itunes:image"]?.["@_href"], ALLOWED_IMAGE_HOSTS)
+
+    const podcastTitle = formatText(channel.title) || FALLBACK_TITLE
 
     return {
+      podcastTitle,
       podcastSummary: formatSummary(channel["itunes:summary"] || channel.description || FALLBACK_SUMMARY),
+      podcastImage: podcastImage || undefined,
+      episodeCount: episodes.length,
       episodes,
     }
   } catch (error) {
@@ -176,7 +210,9 @@ export async function fetchPodcastData(): Promise<PodcastData> {
     }
 
     return {
+      podcastTitle: FALLBACK_TITLE,
       podcastSummary: FALLBACK_SUMMARY,
+      episodeCount: 0,
       episodes: [],
     }
   } finally {

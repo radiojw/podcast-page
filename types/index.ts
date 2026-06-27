@@ -9,9 +9,14 @@ export interface Episode {
     type: string
     length: string
   } | null
+  imageUrl?: string
+  duration?: string
 }
 
 export interface PodcastData {
+  podcastTitle: string
   podcastSummary: string
+  podcastImage?: string
+  episodeCount: number
   episodes: Episode[]
 }

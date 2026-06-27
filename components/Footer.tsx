@@ -1,5 +1,7 @@
 import { Rss } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
+import { fetchPodcastData } from "@/lib/fetchPodcastData"
 
 const links = [
   {
@@ -12,29 +14,40 @@ const links = [
   },
 ]
 
-export default function Footer() {
+export default async function Footer() {
+  const podcastData = await fetchPodcastData()
+  const coverArt = podcastData.podcastImage
+
   return (
-    <footer className="bg-[#17130f] px-4 py-8 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h3 className="text-xl font-black">What Is This Place</h3>
-          <p className="mt-1 text-sm text-[#cfc7bd]">Travel Podcast with Neil Real and Shredz Pali</p>
+    <footer className="bg-brand-ink px-4 py-10 text-white sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-4">
+          {coverArt && (
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-1 ring-white/15">
+              <Image src={coverArt} alt="" fill sizes="56px" className="object-cover" />
+            </div>
+          )}
+          <div>
+            <h3 className="font-display text-xl font-semibold">What Is This Place</h3>
+            <p className="mt-1 text-sm text-zinc-400">Travel podcast with Neil Real & Shredz Pali</p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-4">
+
+        <div className="flex flex-wrap items-center gap-5">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-bold text-[#f7e9c7] transition-colors hover:text-[#e9c46a] focus:outline-none focus:ring-2 focus:ring-[#e9c46a] focus:ring-offset-2 focus:ring-offset-[#17130f]"
+              className="font-semibold text-brand-gold-light transition-colors hover:text-brand-gold focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-ink"
             >
               {link.label}
             </Link>
           ))}
           <Link
             href="https://anchor.fm/s/da593d5c/podcast/rss"
-            className="text-[#f7e9c7] transition-colors hover:text-[#e9c46a] focus:outline-none focus:ring-2 focus:ring-[#e9c46a] focus:ring-offset-2 focus:ring-offset-[#17130f]"
+            className="text-brand-gold-light transition-colors hover:text-brand-gold focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-ink"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -43,7 +56,8 @@ export default function Footer() {
           </Link>
         </div>
       </div>
-      <div className="mx-auto mt-8 max-w-5xl text-sm text-[#cfc7bd]">
+
+      <div className="mx-auto mt-8 max-w-6xl border-t border-white/10 pt-6 text-sm text-zinc-500">
         &copy; {new Date().getFullYear()} What Is This Place. All rights reserved.
       </div>
     </footer>
