@@ -61,6 +61,10 @@ function getText(value: unknown): string {
     return String(value)
   }
 
+  if (Array.isArray(value)) {
+    return value.map(getText).join(" ").trim()
+  }
+
   if (value && typeof value === "object" && "#text" in value) {
     return getText((value as { "#text"?: unknown })["#text"])
   }
