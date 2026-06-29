@@ -150,7 +150,7 @@ export default function PodcastPlayer({
               <button
                 type="button"
                 onClick={() => skipTime(-15)}
-                className="rounded-full p-1.5 text-zinc-400 transition-colors hover:text-white focus:outline-none"
+                className="rounded-full p-1.5 text-zinc-400 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-ink"
                 aria-label="Rewind 15 seconds"
               >
                 <RotateCcw className="h-4 w-4" />
@@ -172,7 +172,7 @@ export default function PodcastPlayer({
               <button
                 type="button"
                 onClick={() => skipTime(15)}
-                className="rounded-full p-1.5 text-zinc-400 transition-colors hover:text-white focus:outline-none"
+                className="rounded-full p-1.5 text-zinc-400 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-ink"
                 aria-label="Fast forward 15 seconds"
               >
                 <RotateCw className="h-4 w-4" />
@@ -194,7 +194,7 @@ export default function PodcastPlayer({
                 style={{
                   background: `linear-gradient(to right, #e9c46a 0%, #e9c46a ${sliderValue}%, #3f3f46 ${sliderValue}%, #3f3f46 100%)`,
                 }}
-                aria-label="Progress bar"
+                aria-label={`Seek. Current position ${formatTime(currentTime)} of ${displayDuration}`}
               />
               <span className="w-10 text-left tabular-nums">{displayDuration}</span>
             </div>
@@ -205,7 +205,7 @@ export default function PodcastPlayer({
               <button
                 type="button"
                 onClick={() => setIsMuted(!isMuted)}
-                className="text-zinc-400 transition-colors hover:text-white focus:outline-none"
+                className="rounded-full p-1 text-zinc-400 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-ink"
                 aria-label={isMuted ? "Unmute" : "Mute"}
               >
                 {isMuted || volume === 0 ? (
@@ -232,7 +232,7 @@ export default function PodcastPlayer({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-2 text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus:outline-none"
+              className="rounded-full p-2 text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-ink"
               aria-label="Close player"
             >
               <X className="h-5 w-5" />

@@ -72,14 +72,24 @@ function getText(value: unknown): string {
   return ""
 }
 
+// Numeric character references in untrusted feed content can encode control
+// characters (null, C0/C1 ranges). Map those to a space instead of emitting raw
+// control chars; pass through anything printable.
+function safeFromCharCode(code: number) {
+  if (!Number.isFinite(code) || code < 32 || (code >= 127 && code < 160)) {
+    return " "
+  }
+  return String.fromCharCode(code)
+}
+
 function decodeHtmlEntities(value: string) {
   let decoded = value
 
   for (let pass = 0; pass < 2; pass += 1) {
     decoded = decoded
       .replace(/&amp;/g, "&")
-      .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
-      .replace(/&#x([a-f0-9]+);/gi, (_, code: string) => String.fromCharCode(Number.parseInt(code, 16)))
+      .replace(/&#(\d+);/g, (_, code: string) => safeFromCharCode(Number(code)))
+      .replace(/&#x([a-f0-9]+);/gi, (_, code: string) => safeFromCharCode(Number.parseInt(code, 16)))
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
       .replace(/&apos;/g, "'")

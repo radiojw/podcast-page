@@ -41,6 +41,14 @@ export default async function Home() {
   const podcastData = await fetchPodcastData()
 
   const coverArt = podcastData.podcastImage || FALLBACK_COVER_ART
+
+  // Preconnect to the cover-art CDN origin (priority hero image / LCP).
+  let coverOrigin: string | null = null
+  try {
+    coverOrigin = new URL(coverArt).origin
+  } catch {
+    coverOrigin = null
+  }
   const latestEpisode = [...podcastData.episodes].sort(
     (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
   )[0]
@@ -83,6 +91,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-brand-cream text-zinc-900 selection:bg-brand-gold selection:text-brand-forest-dark">
+      {coverOrigin && <link rel="preconnect" href={coverOrigin} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
