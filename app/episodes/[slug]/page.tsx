@@ -7,6 +7,7 @@ import { fetchPodcastData } from "@/lib/fetchPodcastData"
 import { buildEpisodeSlugs, getEpisodeBySlug } from "@/lib/episodeSlug"
 import { formatEpisodeDate, formatDuration, formatFileSize, getEpisodeLabel } from "@/lib/formatEpisode"
 import { FALLBACK_COVER_ART } from "@/lib/rssConstants"
+import { SITE_URL, PODCAST_TITLE } from "@/lib/siteConfig"
 
 export const dynamicParams = false
 
@@ -73,12 +74,12 @@ export default async function EpisodePage({
     name: episode.title,
     description: episode.summary,
     datePublished: episode.pubDate,
-    url: `https://whatisthisplace.org/episodes/${slug}`,
+    url: `${SITE_URL}/episodes/${slug}`,
     image,
     partOfSeries: {
       "@type": "PodcastSeries",
-      name: "What Is This Place",
-      url: "https://whatisthisplace.org",
+      name: PODCAST_TITLE,
+      url: SITE_URL,
     },
     ...(episode.enclosure
       ? {

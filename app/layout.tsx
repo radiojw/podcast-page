@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react"
 import { Fraunces, Source_Sans_3 } from "next/font/google"
 import Footer from "@/components/Footer"
 import { RSS_URL, FALLBACK_COVER_ART } from "@/lib/rssConstants"
+import { SITE_URL, PODCAST_HOSTS } from "@/lib/siteConfig"
 import "./globals.css"
 
 const fraunces = Fraunces({
@@ -18,19 +19,9 @@ const sourceSans = Source_Sans_3({
   display: "swap",
 })
 
-const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://whatisthisplace.org"
-
-const getBaseUrl = () => {
-  if (!SITE_URL.startsWith("http://") && !SITE_URL.startsWith("https://")) {
-    return `https://${SITE_URL}`
-  }
-
-  return SITE_URL
-}
-
 export const metadata: Metadata = {
-  metadataBase: new URL(getBaseUrl()),
-  title: "What Is This Place? w/ Neil Real and Shredz Pali - Travel Podcast",
+  metadataBase: new URL(SITE_URL),
+  title: `What Is This Place? w/ ${PODCAST_HOSTS} - Travel Podcast`,
   description:
     "Join Neil Real and Shredz Pali as they explore unique destinations in their travel podcast, What Is This Place.",
   keywords: [
@@ -43,7 +34,7 @@ export const metadata: Metadata = {
     "adventure podcast",
     "what is this place",
   ],
-  authors: [{ name: "Neil Real and Shredz Pali" }],
+  authors: [{ name: PODCAST_HOSTS }],
   alternates: {
     canonical: "/",
     types: {
@@ -51,10 +42,10 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "What Is This Place? w/ Neil Real and Shredz Pali",
+    title: `What Is This Place? w/ ${PODCAST_HOSTS}`,
     description: "Join Neil Real and Shredz Pali as they explore unique destinations in their travel podcast.",
     type: "website",
-    url: getBaseUrl(),
+    url: SITE_URL,
     siteName: "What Is This Place? Travel Talk Radio",
     images: [
       {
@@ -67,7 +58,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "What Is This Place? w/ Neil Real and Shredz Pali",
+    title: `What Is This Place? w/ ${PODCAST_HOSTS}`,
     description: "Travel talk radio with Neil Real and Shredz Pali.",
     images: [FALLBACK_COVER_ART],
   },

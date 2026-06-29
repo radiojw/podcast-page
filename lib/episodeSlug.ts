@@ -32,10 +32,18 @@ export function buildEpisodeSlugs(episodes: Episode[]): Map<string, string> {
   return result
 }
 
-/** Return a copy of each episode with its `slug` populated. */
-export function withSlugs(episodes: Episode[]): Episode[] {
+/** An episode guaranteed to carry a resolved slug. */
+export type EpisodeWithSlug = Episode & { slug: string }
+
+/** Return a copy of each episode with its `slug` guaranteed-populated. */
+export function withSlugs(episodes: Episode[]): EpisodeWithSlug[] {
   const slugs = buildEpisodeSlugs(episodes)
-  return episodes.map((episode) => ({ ...episode, slug: slugs.get(episode.guid) }))
+  // buildEpisodeSlugs assigns a slug for every guid in this list, so the get
+  // is total here; fall back defensively just in case.
+  return episodes.map((episode) => ({
+    ...episode,
+    slug: slugs.get(episode.guid) ?? (slugify(episode.title) || "episode"),
+  }))
 }
 
 /** Find an episode by its computed slug. */

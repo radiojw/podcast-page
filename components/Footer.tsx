@@ -3,17 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
 import { RSS_URL } from "@/lib/rssConstants"
-
-const links = [
-  {
-    href: "https://open.spotify.com/show/0bH1fyMB2MDdK8x2WAd7Uo",
-    label: "Spotify",
-  },
-  {
-    href: "https://podcasts.apple.com/us/podcast/what-is-this-place-travel-talk-radio/id1661457126?uo=4",
-    label: "Apple Podcasts",
-  },
-]
+import { PODCAST_LINKS, PODCAST_TITLE, PODCAST_TAGLINE } from "@/lib/siteConfig"
 
 export default async function Footer() {
   const podcastData = await fetchPodcastData()
@@ -29,13 +19,13 @@ export default async function Footer() {
             </div>
           )}
           <div>
-            <h3 className="font-display text-xl font-semibold">What Is This Place</h3>
-            <p className="mt-1 text-sm text-zinc-400">Travel podcast with Neil Real & Shredz Pali</p>
+            <h3 className="font-display text-xl font-semibold">{PODCAST_TITLE}</h3>
+            <p className="mt-1 text-sm text-zinc-400">{PODCAST_TAGLINE}</p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-5">
-          {links.map((link) => (
+          {PODCAST_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}

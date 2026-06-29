@@ -20,6 +20,12 @@ const sizeClasses = {
   lg: "aspect-square w-full rounded-2xl",
 }
 
+const playButtonSize = {
+  sm: "2.25rem",
+  md: "2.75rem",
+  lg: "4rem",
+}
+
 export default function EpisodeCover({
   src,
   alt,
@@ -61,10 +67,7 @@ export default function EpisodeCover({
             type="button"
             onClick={onPlayPause}
             className="flex scale-90 items-center justify-center rounded-full bg-brand-gold text-brand-ink opacity-0 shadow-lg transition-all duration-300 group-hover/cover:scale-100 group-hover/cover:opacity-100 focus:scale-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2"
-            style={{
-              width: size === "lg" ? "4rem" : size === "md" ? "2.75rem" : "2.25rem",
-              height: size === "lg" ? "4rem" : size === "md" ? "2.75rem" : "2.25rem",
-            }}
+            style={{ width: playButtonSize[size], height: playButtonSize[size] }}
             aria-label={isPlaying ? "Pause episode" : "Play episode"}
           >
             {isPlaying ? (

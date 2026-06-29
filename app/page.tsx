@@ -5,25 +5,11 @@ import { fetchPodcastData } from "@/lib/fetchPodcastData"
 import { withSlugs } from "@/lib/episodeSlug"
 import { formatEpisodeDate, formatFeedDate } from "@/lib/formatEpisode"
 import { FALLBACK_COVER_ART } from "@/lib/rssConstants"
+import { SITE_URL, PODCAST_HOSTS, PODCAST_LINKS, type PodcastPlatform } from "@/lib/siteConfig"
 import { MapPin, Mic2, Radio, Rss } from "lucide-react"
 
-const podcastLinks = [
-  {
-    href: "https://open.spotify.com/show/0bH1fyMB2MDdK8x2WAd7Uo",
-    label: "Spotify",
-    icon: "spotify",
-    bgClass: "bg-[#1ed760] hover:bg-[#1db954] text-black",
-  },
-  {
-    href: "https://podcasts.apple.com/us/podcast/what-is-this-place-travel-talk-radio/id1661457126?uo=4",
-    label: "Apple Podcasts",
-    icon: "apple",
-    bgClass: "bg-[#fc3c44] hover:bg-[#d93037] text-white",
-  },
-]
-
-function PlatformIcon({ icon }: { icon: string }) {
-  if (icon === "spotify") {
+function PlatformIcon({ platform }: { platform: PodcastPlatform }) {
+  if (platform === "spotify") {
     return (
       <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
@@ -51,9 +37,8 @@ export default async function Home() {
   } catch {
     coverOrigin = null
   }
-  const latestEpisode = [...podcastData.episodes].sort(
-    (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-  )[0]
+  // episodes are already sorted newest-first (NaN-safe) by the parser.
+  const latestEpisode = podcastData.episodes[0]
   const primaryCategory = podcastData.podcastCategories?.at(-1)
   const feedUpdated = formatFeedDate(podcastData.lastBuildDate)
 
@@ -62,15 +47,15 @@ export default async function Home() {
     "@type": "PodcastSeries",
     "name": podcastData.podcastTitle,
     "description": podcastData.podcastSummary,
-    "url": "https://whatisthisplace.org",
+    "url": SITE_URL,
     "image": coverArt,
     "author": {
       "@type": "Person",
-      "name": "Neil Real & Shredz Pali"
+      "name": PODCAST_HOSTS
     },
     "publisher": {
       "@type": "Person",
-      "name": "Neil Real & Shredz Pali"
+      "name": PODCAST_HOSTS
     },
     "webFeed": podcastData.feedUrl || "https://anchor.fm/s/da593d5c/podcast/rss",
     "hasPart": podcastData.episodes.map((ep) => ({
@@ -168,7 +153,7 @@ export default async function Home() {
               <div className="mt-10">
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Listen on</p>
                 <div className="mt-3 flex flex-wrap gap-3">
-                  {podcastLinks.map((link) => (
+                  {PODCAST_LINKS.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
@@ -176,7 +161,7 @@ export default async function Home() {
                       rel="noopener noreferrer"
                       className={`inline-flex min-h-11 items-center gap-2.5 rounded-full px-5 py-2.5 text-sm font-bold shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-forest-dark ${link.bgClass}`}
                     >
-                      <PlatformIcon icon={link.icon} />
+                      <PlatformIcon platform={link.platform} />
                       <span>{link.label}</span>
                     </Link>
                   ))}

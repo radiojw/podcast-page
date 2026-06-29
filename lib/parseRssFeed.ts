@@ -1,5 +1,6 @@
 import { XMLParser } from "fast-xml-parser"
 import type { Episode, PodcastData } from "../types"
+import { compareByPubDate } from "./formatEpisode"
 import {
   ALLOWED_AUDIO_HOSTS,
   ALLOWED_IMAGE_HOSTS,
@@ -85,8 +86,10 @@ function safeFromCharCode(code: number) {
 function decodeHtmlEntities(value: string) {
   let decoded = value
 
-  for (let pass = 0; pass < 2; pass += 1) {
-    decoded = decoded
+  // Resolve nested / double-encoded entities (e.g. "&amp;#39;"), iterating
+  // until the string stabilises. Bounded to avoid any pathological input loop.
+  for (let pass = 0; pass < 5; pass += 1) {
+    const next = decoded
       .replace(/&amp;/g, "&")
       .replace(/&#(\d+);/g, (_, code: string) => safeFromCharCode(Number(code)))
       .replace(/&#x([a-f0-9]+);/gi, (_, code: string) => safeFromCharCode(Number.parseInt(code, 16)))
@@ -96,6 +99,9 @@ function decodeHtmlEntities(value: string) {
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
       .replace(/&nbsp;/g, " ")
+
+    if (next === decoded) break
+    decoded = next
   }
 
   return decoded
@@ -265,7 +271,8 @@ function parseEnclosure(item: RssItem) {
   return {
     url: enclosureUrl,
     type: enclosureType.startsWith("audio/") ? enclosureType : "audio/mpeg",
-    length: Number.isFinite(fileSize) && fileSize > 0 ? String(fileSize) : lengthText,
+    // Only surface a byte count we can trust; never leak unparseable text.
+    length: Number.isFinite(fileSize) && fileSize > 0 ? String(fileSize) : "",
   }
 }
 
@@ -280,7 +287,7 @@ function parseEpisode(item: RssItem, index: number, podcastImage?: string): Epis
   const summaryPreview = buildSummaryPreview(summary)
 
   return {
-    title: formatText(item.title) || "Untitled episode",
+    title: formatText(item.title),
     pubDate: parseIsoDate(item.pubDate),
     link: safeHttpsUrl(item.link, ALLOWED_LINK_HOSTS) || FALLBACK_SHOW_LINK,
     guid: parseGuid(item.guid, index),
@@ -298,15 +305,7 @@ function parseEpisode(item: RssItem, index: number, podcastImage?: string): Epis
 }
 
 function sortEpisodesByDate(episodes: Episode[]) {
-  return [...episodes].sort((a, b) => {
-    const aTime = new Date(a.pubDate).getTime()
-    const bTime = new Date(b.pubDate).getTime()
-
-    if (Number.isNaN(aTime) && Number.isNaN(bTime)) return 0
-    if (Number.isNaN(aTime)) return 1
-    if (Number.isNaN(bTime)) return -1
-    return bTime - aTime
-  })
+  return [...episodes].sort((a, b) => compareByPubDate(a, b, "newest"))
 }
 
 export function parseRssFeed(xmlData: string): PodcastData {
@@ -335,7 +334,10 @@ export function parseRssFeed(xmlData: string): PodcastData {
   const episodes = sortEpisodesByDate(
     rawItems
       .map((item, index) => parseEpisode(item, index, podcastImage || undefined))
-      .filter((episode) => episode.title !== "Untitled episode" || episode.enclosure)
+      // Keep an item only if it carries a real title or playable audio…
+      .filter((episode) => episode.title !== "" || episode.enclosure)
+      // …then backfill a display title for the kept-but-untitled ones.
+      .map((episode) => (episode.title ? episode : { ...episode, title: "Untitled episode" }))
   )
 
   const podcastTitle = formatText(channel.title) || FALLBACK_TITLE

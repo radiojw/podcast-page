@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX, X } from "lucide-react"
 import EpisodeCover from "./EpisodeCover"
 import { formatDuration } from "@/lib/formatEpisode"
+import { PODCAST_TITLE } from "@/lib/siteConfig"
 import type { Episode } from "../types"
 
 interface PodcastPlayerProps {
@@ -60,7 +61,6 @@ export default function PodcastPlayer({
   const [volume, setVolume] = useState(0.8)
   const [isMuted, setIsMuted] = useState(false)
   const [isSeeking, setIsSeeking] = useState(false)
-  const [sliderValue, setSliderValue] = useState(0)
   const [playbackRate, setPlaybackRate] = useState(1)
   const lastSavedRef = useRef(0)
 
@@ -76,12 +76,15 @@ export default function PodcastPlayer({
     }
   }, [isPlaying, activeEpisode])
 
+  // Reset transport state when the episode changes. This render-phase update
+  // (React's documented "adjust state on prop change" pattern) avoids a flash
+  // of the previous episode's progress before an effect could run.
   const [prevEpisodeGuid, setPrevEpisodeGuid] = useState<string | null>(null)
 
   if (activeEpisode && activeEpisode.guid !== prevEpisodeGuid) {
     setPrevEpisodeGuid(activeEpisode.guid)
     setCurrentTime(0)
-    setSliderValue(0)
+    setIsSeeking(false)
   }
 
   useEffect(() => {
@@ -104,7 +107,6 @@ export default function PodcastPlayer({
       if (duration > 0 && newTime > duration) newTime = duration
       audioRef.current.currentTime = newTime
       setCurrentTime(newTime)
-      if (duration > 0) setSliderValue((newTime / duration) * 100)
     },
     [duration]
   )
@@ -150,8 +152,8 @@ export default function PodcastPlayer({
     const artwork = activeEpisode.imageUrl || podcastImage
     navigator.mediaSession.metadata = new MediaMetadata({
       title: activeEpisode.title,
-      artist: "What Is This Place",
-      album: "What Is This Place",
+      artist: PODCAST_TITLE,
+      album: PODCAST_TITLE,
       ...(artwork ? { artwork: [{ src: artwork, sizes: "512x512" }] } : {}),
     })
 
@@ -191,9 +193,6 @@ export default function PodcastPlayer({
     if (!audioRef.current || isSeeking) return
     const time = audioRef.current.currentTime
     setCurrentTime(time)
-    if (duration > 0) {
-      setSliderValue((time / duration) * 100)
-    }
     // Persist playback position at most once per ~5s for resume-on-return.
     if (activeEpisode && Math.abs(time - lastSavedRef.current) >= 5) {
       lastSavedRef.current = time
@@ -205,6 +204,7 @@ export default function PodcastPlayer({
     if (!audioRef.current || !activeEpisode) return
     const total = audioRef.current.duration
     setDuration(total)
+    lastSavedRef.current = 0
 
     // Resume from the saved position, unless we're within 10s of the end.
     const saved = loadPosition(activeEpisode.guid)
@@ -212,7 +212,6 @@ export default function PodcastPlayer({
       audioRef.current.currentTime = saved
       setCurrentTime(saved)
       lastSavedRef.current = saved
-      if (total > 0) setSliderValue((saved / total) * 100)
     }
   }
 
@@ -221,19 +220,17 @@ export default function PodcastPlayer({
     onPlayPause(activeEpisode)
   }
 
+  // Commit the seek eagerly on every change so keyboard interaction (arrow keys
+  // on the range input, which never fire pointer/touch-end) actually seeks.
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsSeeking(true)
-    const val = Number.parseFloat(e.target.value)
-    setSliderValue(val)
-    setCurrentTime((val / 100) * duration)
+    if (!audioRef.current || duration <= 0) return
+    const newTime = (Number.parseFloat(e.target.value) / 100) * duration
+    setCurrentTime(newTime)
+    audioRef.current.currentTime = newTime
   }
 
-  const handleSeekEnd = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = (sliderValue / 100) * duration
-    }
-    setIsSeeking(false)
-  }
+  // isSeeking suppresses timeupdate-driven jitter while the user drags.
+  const sliderValue = duration > 0 ? (currentTime / duration) * 100 : 0
 
   const cycleSpeed = () => {
     const currentIndex = PLAYBACK_SPEEDS.indexOf(
@@ -287,7 +284,7 @@ export default function PodcastPlayer({
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 truncate text-xs text-zinc-400">What Is This Place</p>
+              <p className="mt-0.5 truncate text-xs text-zinc-400">{PODCAST_TITLE}</p>
             </div>
           </div>
 
@@ -334,13 +331,16 @@ export default function PodcastPlayer({
                 step="0.1"
                 value={sliderValue}
                 onChange={handleSeekChange}
-                onMouseUp={handleSeekEnd}
-                onTouchEnd={handleSeekEnd}
+                onPointerDown={() => setIsSeeking(true)}
+                onPointerUp={() => setIsSeeking(false)}
+                onPointerCancel={() => setIsSeeking(false)}
+                onBlur={() => setIsSeeking(false)}
                 className="h-1.5 flex-grow cursor-pointer appearance-none rounded-lg bg-zinc-700"
                 style={{
                   background: `linear-gradient(to right, #e9c46a 0%, #e9c46a ${sliderValue}%, #3f3f46 ${sliderValue}%, #3f3f46 100%)`,
                 }}
-                aria-label={`Seek. Current position ${formatTime(currentTime)} of ${displayDuration}`}
+                aria-label="Seek through episode"
+                aria-valuetext={`${formatTime(currentTime)} of ${displayDuration}`}
               />
               <span className="w-10 text-left tabular-nums">{displayDuration}</span>
             </div>
@@ -381,6 +381,7 @@ export default function PodcastPlayer({
                 }}
                 className="h-1 w-20 cursor-pointer appearance-none rounded-lg bg-zinc-700"
                 aria-label="Volume"
+                aria-valuetext={`${Math.round((isMuted ? 0 : volume) * 100)}%`}
               />
             </div>
 
