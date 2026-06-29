@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { Search, Sparkles, AlertCircle, Play, Pause, Calendar, Clock, X } from "lucide-react"
 import EpisodeList from "./EpisodeList"
 import PodcastPlayer from "./PodcastPlayer"
@@ -136,7 +137,18 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
                   id="featured-heading"
                   className="mt-4 font-display text-balance text-2xl font-semibold leading-tight text-zinc-950 sm:text-3xl flex items-start gap-3 justify-between"
                 >
-                  <span className="flex-grow">{latestEpisode.title}</span>
+                  <span className="flex-grow">
+                    {latestEpisode.slug ? (
+                      <Link
+                        href={`/episodes/${latestEpisode.slug}`}
+                        className="rounded transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
+                      >
+                        {latestEpisode.title}
+                      </Link>
+                    ) : (
+                      latestEpisode.title
+                    )}
+                  </span>
                   {isLatestPlaying && (
                     <span className="mt-2 flex items-end gap-0.5 h-4 px-1 text-brand-gold shrink-0" aria-hidden="true">
                       <span className="eq-bar eq-bar-1" />

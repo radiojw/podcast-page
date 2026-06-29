@@ -1,10 +1,17 @@
 # 'unsafe-eval' removed: a static Next.js export needs no runtime eval.
-# 'unsafe-inline' is still required by Next's inline bootstrap chunks and the
-# JSON-LD block; it could later be tightened to per-script hashes.
+#
+# 'unsafe-inline' in script-src is unavoidable here: the App Router emits many
+# per-page inline RSC flight scripts (self.__next_f.push(...)). Removing it
+# would require either a ~8KB list of 140+ sha256 hashes (regenerated every
+# build) or a per-request nonce / 'strict-dynamic' — both impossible for a
+# fully static export. style-src 'unsafe-inline' is likewise needed for the
+# framework's inline style tags.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: d3t3ozftmdmh3i.cloudfront.net d3ctxlq1ktw2nl.cloudfront.net anchor.fm i.scdn.co is1-ssl.mzstatic.com content.production.cdn.art19.com media.npr.org f.prxu.org assets.pippa.io megaphone.imgix.net static.megaphone.fm; media-src 'self' blob: data: anchor.fm d3t3ozftmdmh3i.cloudfront.net d3ctxlq1ktw2nl.cloudfront.net chtbl.com megaphone.fm media.rss.com; connect-src 'self' https://vitals.vercel-insights.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests;
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: d3t3ozftmdmh3i.cloudfront.net d3ctxlq1ktw2nl.cloudfront.net anchor.fm i.scdn.co is1-ssl.mzstatic.com content.production.cdn.art19.com media.npr.org f.prxu.org assets.pippa.io megaphone.imgix.net static.megaphone.fm; media-src 'self' blob: data: anchor.fm d3t3ozftmdmh3i.cloudfront.net d3ctxlq1ktw2nl.cloudfront.net chtbl.com megaphone.fm media.rss.com; connect-src 'self' https://vitals.vercel-insights.com; font-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests;
   X-Content-Type-Options: nosniff
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Cross-Origin-Opener-Policy: same-origin
+  X-Permitted-Cross-Domain-Policies: none
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()

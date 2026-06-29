@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import PodcastFeed from "@/components/PodcastFeed"
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
+import { withSlugs } from "@/lib/episodeSlug"
 import { formatEpisodeDate, formatFeedDate } from "@/lib/formatEpisode"
 import { FALLBACK_COVER_ART } from "@/lib/rssConstants"
 import { MapPin, Mic2, Radio, Rss } from "lucide-react"
@@ -38,7 +39,8 @@ function PlatformIcon({ icon }: { icon: string }) {
 }
 
 export default async function Home() {
-  const podcastData = await fetchPodcastData()
+  const rawData = await fetchPodcastData()
+  const podcastData = { ...rawData, episodes: withSlugs(rawData.episodes) }
 
   const coverArt = podcastData.podcastImage || FALLBACK_COVER_ART
 
