@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX, X } from "lucide-react"
 import EpisodeCover from "./EpisodeCover"
 import { formatDuration } from "@/lib/formatEpisode"
@@ -12,6 +12,39 @@ interface PodcastPlayerProps {
   onPlayPause: (episode: Episode) => void
   onClose: () => void
   podcastImage?: string
+}
+
+const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 1.75, 2, 0.75] as const
+
+const positionKey = (guid: string) => `wtp:pos:${guid}`
+
+function loadPosition(guid: string): number {
+  if (typeof window === "undefined") return 0
+  try {
+    const raw = window.localStorage.getItem(positionKey(guid))
+    const value = raw ? Number.parseFloat(raw) : 0
+    return Number.isFinite(value) && value > 0 ? value : 0
+  } catch {
+    return 0
+  }
+}
+
+function savePosition(guid: string, seconds: number) {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.setItem(positionKey(guid), String(Math.floor(seconds)))
+  } catch {
+    /* storage unavailable (private mode / quota) — ignore */
+  }
+}
+
+function clearPosition(guid: string) {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.removeItem(positionKey(guid))
+  } catch {
+    /* ignore */
+  }
 }
 
 export default function PodcastPlayer({
@@ -28,6 +61,8 @@ export default function PodcastPlayer({
   const [isMuted, setIsMuted] = useState(false)
   const [isSeeking, setIsSeeking] = useState(false)
   const [sliderValue, setSliderValue] = useState(0)
+  const [playbackRate, setPlaybackRate] = useState(1)
+  const lastSavedRef = useRef(0)
 
   useEffect(() => {
     if (!audioRef.current || !activeEpisode) return
@@ -55,22 +90,134 @@ export default function PodcastPlayer({
     }
   }, [volume, isMuted])
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate
+    }
+  }, [playbackRate])
+
+  const skipTime = useCallback(
+    (amount: number) => {
+      if (!audioRef.current) return
+      let newTime = audioRef.current.currentTime + amount
+      if (newTime < 0) newTime = 0
+      if (duration > 0 && newTime > duration) newTime = duration
+      audioRef.current.currentTime = newTime
+      setCurrentTime(newTime)
+      if (duration > 0) setSliderValue((newTime / duration) * 100)
+    },
+    [duration]
+  )
+
+  // Keyboard shortcuts: Space = play/pause, ←/→ = skip 15s.
+  useEffect(() => {
+    if (!activeEpisode) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null
+      if (
+        el &&
+        (el.tagName === "INPUT" ||
+          el.tagName === "TEXTAREA" ||
+          el.tagName === "SELECT" ||
+          el.isContentEditable)
+      ) {
+        return
+      }
+
+      if (e.code === "Space") {
+        e.preventDefault()
+        onPlayPause(activeEpisode)
+      } else if (e.code === "ArrowLeft") {
+        e.preventDefault()
+        skipTime(-15)
+      } else if (e.code === "ArrowRight") {
+        e.preventDefault()
+        skipTime(15)
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [activeEpisode, onPlayPause, skipTime])
+
+  // Media Session API: lock-screen / hardware media controls + metadata.
+  useEffect(() => {
+    if (!activeEpisode || typeof navigator === "undefined" || !("mediaSession" in navigator)) {
+      return
+    }
+
+    const artwork = activeEpisode.imageUrl || podcastImage
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: activeEpisode.title,
+      artist: "What Is This Place",
+      album: "What Is This Place",
+      ...(artwork ? { artwork: [{ src: artwork, sizes: "512x512" }] } : {}),
+    })
+
+    navigator.mediaSession.setActionHandler("play", () => onPlayPause(activeEpisode))
+    navigator.mediaSession.setActionHandler("pause", () => onPlayPause(activeEpisode))
+    navigator.mediaSession.setActionHandler("seekbackward", () => skipTime(-15))
+    navigator.mediaSession.setActionHandler("seekforward", () => skipTime(15))
+    navigator.mediaSession.setActionHandler("seekto", (details) => {
+      if (audioRef.current && typeof details.seekTime === "number") {
+        audioRef.current.currentTime = details.seekTime
+        setCurrentTime(details.seekTime)
+      }
+    })
+
+    return () => {
+      const handlers: MediaSessionAction[] = [
+        "play",
+        "pause",
+        "seekbackward",
+        "seekforward",
+        "seekto",
+      ]
+      for (const action of handlers) {
+        navigator.mediaSession.setActionHandler(action, null)
+      }
+    }
+  }, [activeEpisode, onPlayPause, skipTime, podcastImage])
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused"
+  }, [isPlaying])
+
   if (!activeEpisode) return null
 
   const handleTimeUpdate = () => {
     if (!audioRef.current || isSeeking) return
-    setCurrentTime(audioRef.current.currentTime)
+    const time = audioRef.current.currentTime
+    setCurrentTime(time)
     if (duration > 0) {
-      setSliderValue((audioRef.current.currentTime / duration) * 100)
+      setSliderValue((time / duration) * 100)
+    }
+    // Persist playback position at most once per ~5s for resume-on-return.
+    if (activeEpisode && Math.abs(time - lastSavedRef.current) >= 5) {
+      lastSavedRef.current = time
+      savePosition(activeEpisode.guid, time)
     }
   }
 
   const handleLoadedMetadata = () => {
-    if (!audioRef.current) return
-    setDuration(audioRef.current.duration)
+    if (!audioRef.current || !activeEpisode) return
+    const total = audioRef.current.duration
+    setDuration(total)
+
+    // Resume from the saved position, unless we're within 10s of the end.
+    const saved = loadPosition(activeEpisode.guid)
+    if (saved > 0 && Number.isFinite(total) && saved < total - 10) {
+      audioRef.current.currentTime = saved
+      setCurrentTime(saved)
+      lastSavedRef.current = saved
+      if (total > 0) setSliderValue((saved / total) * 100)
+    }
   }
 
   const handleAudioEnded = () => {
+    if (activeEpisode) clearPosition(activeEpisode.guid)
     onPlayPause(activeEpisode)
   }
 
@@ -88,13 +235,12 @@ export default function PodcastPlayer({
     setIsSeeking(false)
   }
 
-  const skipTime = (amount: number) => {
-    if (!audioRef.current) return
-    let newTime = audioRef.current.currentTime + amount
-    if (newTime < 0) newTime = 0
-    if (newTime > duration) newTime = duration
-    audioRef.current.currentTime = newTime
-    setCurrentTime(newTime)
+  const cycleSpeed = () => {
+    const currentIndex = PLAYBACK_SPEEDS.indexOf(
+      playbackRate as (typeof PLAYBACK_SPEEDS)[number]
+    )
+    const next = PLAYBACK_SPEEDS[(currentIndex + 1) % PLAYBACK_SPEEDS.length]
+    setPlaybackRate(next)
   }
 
   const formatTime = (timeInSeconds: number) => {
@@ -200,7 +346,16 @@ export default function PodcastPlayer({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-4 md:justify-end">
+          <div className="flex items-center justify-between gap-3 md:justify-end">
+            <button
+              type="button"
+              onClick={cycleSpeed}
+              className="rounded-full px-2.5 py-1 text-xs font-bold tabular-nums text-zinc-300 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-ink"
+              aria-label={`Playback speed: ${playbackRate}x. Click to change.`}
+            >
+              {playbackRate}x
+            </button>
+
             <div className="hidden items-center gap-2 sm:flex">
               <button
                 type="button"
