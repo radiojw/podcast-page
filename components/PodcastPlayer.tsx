@@ -381,6 +381,7 @@ export default function PodcastPlayer({
                 }}
                 className="h-1 w-20 cursor-pointer appearance-none rounded-lg bg-zinc-700"
                 aria-label="Volume"
+                aria-valuetext={`${Math.round((isMuted ? 0 : volume) * 100)}%`}
               />
             </div>
 

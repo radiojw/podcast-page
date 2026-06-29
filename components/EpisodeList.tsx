@@ -12,9 +12,10 @@ import {
   getEpisodeLabel,
 } from "@/lib/formatEpisode"
 import type { Episode } from "../types"
+import type { EpisodeWithSlug } from "@/lib/episodeSlug"
 
 interface EpisodeListProps {
-  episodes: Episode[]
+  episodes: EpisodeWithSlug[]
   activeEpisode: Episode | null
   isPlaying: boolean
   onPlayPause: (episode: Episode) => void
@@ -107,16 +108,12 @@ export default function EpisodeList({
 
                   <h3 className="mt-2 font-display text-base font-semibold leading-snug text-zinc-900 transition-colors group-hover:text-brand-forest sm:text-lg flex items-start gap-2 justify-between">
                     <span className="flex-grow">
-                      {episode.slug ? (
-                        <Link
-                          href={`/episodes/${episode.slug}`}
-                          className="rounded transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
-                        >
-                          {episode.title}
-                        </Link>
-                      ) : (
-                        episode.title
-                      )}
+                      <Link
+                        href={`/episodes/${episode.slug}`}
+                        className="rounded transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
+                      >
+                        {episode.title}
+                      </Link>
                     </span>
                     {isCurrentPlaying && (
                       <span className="mt-1.5 flex items-end gap-0.5 h-3.5 px-1 text-brand-gold shrink-0" aria-hidden="true">

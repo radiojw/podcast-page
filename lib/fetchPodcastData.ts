@@ -7,6 +7,7 @@ import {
   FETCH_TIMEOUT,
   RSS_URL,
 } from "./rssConstants"
+import { SITE_URL } from "./siteConfig"
 
 export { RSS_URL } from "./rssConstants"
 
@@ -21,11 +22,13 @@ export const fetchPodcastData = cache(async (): Promise<PodcastData> => {
 
   try {
     const response = await fetch(RSS_URL, {
+      // Note: under `output: export` this runs only at build time; `revalidate`
+      // is a no-op for the deployed static site (refresh = redeploy).
       next: { revalidate: 3600 },
       signal: controller.signal,
       headers: {
         Accept: "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
-        "User-Agent": "Mozilla/5.0 (compatible; WhatIsThisPlace/1.0; +https://whatisthisplace.org)",
+        "User-Agent": `Mozilla/5.0 (compatible; WhatIsThisPlace/1.0; +${SITE_URL})`,
       },
     })
 

@@ -16,8 +16,11 @@ import {
   compareByPubDate,
 } from "@/lib/formatEpisode"
 import type { PodcastData, Episode } from "../types"
+import type { EpisodeWithSlug } from "@/lib/episodeSlug"
 
-export default function PodcastFeed({ initialData: podcastData }: { initialData: PodcastData }) {
+type FeedData = Omit<PodcastData, "episodes"> & { episodes: EpisodeWithSlug[] }
+
+export default function PodcastFeed({ initialData: podcastData }: { initialData: FeedData }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest")
   const [activeEpisode, setActiveEpisode] = useState<Episode | null>(null)
@@ -145,16 +148,12 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
                   className="mt-4 font-display text-balance text-2xl font-semibold leading-tight text-zinc-950 sm:text-3xl flex items-start gap-3 justify-between"
                 >
                   <span className="flex-grow">
-                    {latestEpisode.slug ? (
-                      <Link
-                        href={`/episodes/${latestEpisode.slug}`}
-                        className="rounded transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
-                      >
-                        {latestEpisode.title}
-                      </Link>
-                    ) : (
-                      latestEpisode.title
-                    )}
+                    <Link
+                      href={`/episodes/${latestEpisode.slug}`}
+                      className="rounded transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
+                    >
+                      {latestEpisode.title}
+                    </Link>
                   </span>
                   {isLatestPlaying && (
                     <span className="mt-2 flex items-end gap-0.5 h-4 px-1 text-brand-gold shrink-0" aria-hidden="true">
