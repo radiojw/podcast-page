@@ -1,5 +1,6 @@
 import { XMLParser } from "fast-xml-parser"
 import type { Episode, PodcastData } from "../types"
+import { compareByPubDate } from "./formatEpisode"
 import {
   ALLOWED_AUDIO_HOSTS,
   ALLOWED_IMAGE_HOSTS,
@@ -265,7 +266,8 @@ function parseEnclosure(item: RssItem) {
   return {
     url: enclosureUrl,
     type: enclosureType.startsWith("audio/") ? enclosureType : "audio/mpeg",
-    length: Number.isFinite(fileSize) && fileSize > 0 ? String(fileSize) : lengthText,
+    // Only surface a byte count we can trust; never leak unparseable text.
+    length: Number.isFinite(fileSize) && fileSize > 0 ? String(fileSize) : "",
   }
 }
 
@@ -298,15 +300,7 @@ function parseEpisode(item: RssItem, index: number, podcastImage?: string): Epis
 }
 
 function sortEpisodesByDate(episodes: Episode[]) {
-  return [...episodes].sort((a, b) => {
-    const aTime = new Date(a.pubDate).getTime()
-    const bTime = new Date(b.pubDate).getTime()
-
-    if (Number.isNaN(aTime) && Number.isNaN(bTime)) return 0
-    if (Number.isNaN(aTime)) return 1
-    if (Number.isNaN(bTime)) return -1
-    return bTime - aTime
-  })
+  return [...episodes].sort((a, b) => compareByPubDate(a, b, "newest"))
 }
 
 export function parseRssFeed(xmlData: string): PodcastData {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Search, Sparkles, AlertCircle, Play, Pause, Calendar, Clock, X } from "lucide-react"
@@ -8,7 +8,13 @@ import EpisodeList from "./EpisodeList"
 import PodcastPlayer from "./PodcastPlayer"
 import EpisodeCover from "./EpisodeCover"
 import EpisodeSummary from "./EpisodeSummary"
-import { formatEpisodeDate, formatDuration, formatFileSize, getEpisodeLabel } from "@/lib/formatEpisode"
+import {
+  formatEpisodeDate,
+  formatDuration,
+  formatFileSize,
+  getEpisodeLabel,
+  compareByPubDate,
+} from "@/lib/formatEpisode"
 import type { PodcastData, Episode } from "../types"
 
 export default function PodcastFeed({ initialData: podcastData }: { initialData: PodcastData }) {
@@ -28,11 +34,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
       )
     }
 
-    if (sortBy === "oldest") {
-      result.sort((a, b) => new Date(a.pubDate).getTime() - new Date(b.pubDate).getTime())
-    } else {
-      result.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
-    }
+    result.sort((a, b) => compareByPubDate(a, b, sortBy))
 
     return result
   }, [podcastData.episodes, searchTerm, sortBy])
@@ -52,14 +54,19 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
     return filteredEpisodes
   }, [filteredEpisodes, latestEpisode, searchTerm])
 
-  const handlePlayPause = (episode: Episode) => {
-    if (activeEpisode?.guid === episode.guid) {
-      setIsPlaying(!isPlaying)
-    } else {
-      setActiveEpisode(episode)
-      setIsPlaying(true)
-    }
-  }
+  // Stable identity so the player's keyboard/Media Session effects don't
+  // re-subscribe on unrelated re-renders (e.g. every search keystroke).
+  const handlePlayPause = useCallback(
+    (episode: Episode) => {
+      if (activeEpisode?.guid === episode.guid) {
+        setIsPlaying((playing) => !playing)
+      } else {
+        setActiveEpisode(episode)
+        setIsPlaying(true)
+      }
+    },
+    [activeEpisode?.guid]
+  )
 
   if (!podcastData.episodes.length) {
     return (

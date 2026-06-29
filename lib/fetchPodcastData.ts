@@ -1,3 +1,4 @@
+import { cache } from "react"
 import type { PodcastData } from "../types"
 import { parseRssFeed } from "./parseRssFeed"
 import {
@@ -9,7 +10,12 @@ import {
 
 export { RSS_URL } from "./rssConstants"
 
-export async function fetchPodcastData(): Promise<PodcastData> {
+/**
+ * Fetch + parse the podcast feed. Wrapped in React `cache()` so the multiple
+ * callers that run within a single render pass (page, Footer, generateMetadata,
+ * sitemap) share one fetch + parse instead of repeating the work.
+ */
+export const fetchPodcastData = cache(async (): Promise<PodcastData> => {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT)
 
@@ -51,4 +57,4 @@ export async function fetchPodcastData(): Promise<PodcastData> {
   } finally {
     clearTimeout(timeoutId)
   }
-}
+})

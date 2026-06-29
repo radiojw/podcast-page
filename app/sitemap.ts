@@ -1,13 +1,9 @@
 import type { MetadataRoute } from "next"
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
 import { buildEpisodeSlugs } from "@/lib/episodeSlug"
+import { SITE_URL } from "@/lib/siteConfig"
 
 export const dynamic = "force-static"
-
-const SITE_URL = (process.env.NEXT_PUBLIC_BASE_URL || "https://whatisthisplace.org").replace(
-  /\/$/,
-  ""
-)
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { episodes, lastBuildDate } = await fetchPodcastData()

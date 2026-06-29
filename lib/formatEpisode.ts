@@ -1,3 +1,24 @@
+/**
+ * Compare two episodes by publish date, pushing entries with unparseable dates
+ * to the end regardless of direction. Shared by the feed parser and the UI sort
+ * so ordering stays consistent (and NaN-safe) everywhere.
+ */
+export function compareByPubDate(
+  a: { pubDate: string },
+  b: { pubDate: string },
+  direction: "newest" | "oldest" = "newest"
+) {
+  const aTime = new Date(a.pubDate).getTime()
+  const bTime = new Date(b.pubDate).getTime()
+  const aInvalid = Number.isNaN(aTime)
+  const bInvalid = Number.isNaN(bTime)
+
+  if (aInvalid && bInvalid) return 0
+  if (aInvalid) return 1
+  if (bInvalid) return -1
+  return direction === "newest" ? bTime - aTime : aTime - bTime
+}
+
 export function formatEpisodeDate(date: string) {
   const parsed = new Date(date)
   if (Number.isNaN(parsed.getTime())) {

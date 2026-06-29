@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Play, Pause, Calendar, Clock, Share2, Check, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import EpisodeCover from "./EpisodeCover"
@@ -30,13 +30,20 @@ export default function EpisodeList({
 }: EpisodeListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
+  // Auto-dismiss the "copied" confirmation; cleans up if the component
+  // unmounts or another copy happens before the timer fires.
+  useEffect(() => {
+    if (!copiedId) return
+    const timer = setTimeout(() => setCopiedId(null), 2000)
+    return () => clearTimeout(timer)
+  }, [copiedId])
+
   const handleShare = async (e: React.MouseEvent, episode: Episode) => {
     e.preventDefault()
     e.stopPropagation()
     try {
       await navigator.clipboard.writeText(episode.link)
       setCopiedId(episode.guid)
-      setTimeout(() => setCopiedId(null), 2000)
     } catch (err) {
       console.error("Failed to copy link:", err)
     }
