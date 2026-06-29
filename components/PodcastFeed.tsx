@@ -74,7 +74,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
   const featuredImage = latestEpisode?.imageUrl || podcastData.podcastImage
 
   return (
-    <div className="pb-36">
+    <div className="pb-[calc(9rem+env(safe-area-inset-bottom))]">
       {!searchTerm && latestEpisode && (
         <section aria-labelledby="featured-heading" className="mb-14">
           <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-card transition-shadow duration-300 hover:shadow-card-hover">
@@ -202,6 +202,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
             <input
               type="search"
               placeholder="Search episodes..."
+              aria-label="Search episodes"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-full border border-zinc-200 bg-white py-2.5 pl-10 pr-10 text-sm text-zinc-800 shadow-sm placeholder:text-zinc-400 focus:border-brand-forest focus:outline-none focus:ring-2 focus:ring-brand-forest/20"
@@ -210,7 +211,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 focus:outline-none"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-1"
                 aria-label="Clear search"
               >
                 <X className="h-4 w-4" />
@@ -220,6 +221,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
 
           <select
             value={sortBy}
+            aria-label="Sort episodes"
             onChange={(e) => setSortBy(e.target.value as "newest" | "oldest")}
             className="rounded-full border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm focus:border-brand-forest focus:outline-none focus:ring-2 focus:ring-brand-forest/20"
           >

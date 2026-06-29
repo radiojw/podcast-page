@@ -143,7 +143,7 @@ export default function EpisodeList({
                     href={episode.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-9 items-center gap-1 rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
+                    className="inline-flex min-h-9 items-center gap-1 rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
                   >
                     <span>Spotify</span>
                     <ExternalLink className="h-3 w-3" />
@@ -153,7 +153,7 @@ export default function EpisodeList({
                 <button
                   type="button"
                   onClick={(e) => handleShare(e, episode)}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus:outline-none"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
                   title="Copy link to clipboard"
                 >
                   {copiedId === episode.guid ? (
@@ -175,7 +175,11 @@ export default function EpisodeList({
       })}
 
       {copiedId && (
-        <div className="fixed bottom-28 left-6 z-50 flex items-center gap-2 rounded-xl bg-zinc-950/95 border border-white/10 px-4 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 fade-in duration-300">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-28 left-6 z-50 flex items-center gap-2 rounded-xl bg-zinc-950/95 border border-white/10 px-4 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 fade-in duration-300"
+        >
           <Check className="h-4 w-4 text-brand-gold" />
           <span>Episode link copied to clipboard!</span>
         </div>

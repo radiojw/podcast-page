@@ -28,7 +28,7 @@ export default function EpisodeSummary({
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="mt-2 text-xs font-bold text-brand-forest transition-colors hover:text-brand-forest-light focus:outline-none"
+        className="mt-2 rounded text-xs font-bold text-brand-forest transition-colors hover:text-brand-forest-light focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
       >
         {expanded ? "Show less" : "Read more"}
       </button>
