@@ -17,6 +17,7 @@ export interface Episode {
   seasonNumber?: number
   episodeType?: string
   explicit?: boolean
+  slug?: string
 }
 
 export interface PodcastData {
