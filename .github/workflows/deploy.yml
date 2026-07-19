@@ -32,19 +32,24 @@ jobs:
       - name: Build static export
         run: npm run build
 
-      - name: Load deploy key
-        uses: webfactory/ssh-agent@v0.10.0
-        with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
-
-      - name: Add VPS host key
+      - name: Configure SSH
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_lax1_deploy
+          chmod 600 ~/.ssh/vps_lax1_deploy
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/vps_lax1_deploy
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Deploy static export
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
-        run: rsync -av --delete out/ "debian@${VPS_HOST}:/srv/sites/whatisthisplace.org/public/"
+        run: >-
+          rsync -av --delete
+          -e "ssh -i $HOME/.ssh/vps_lax1_deploy -o IdentitiesOnly=yes -o BatchMode=yes"
+          out/ "debian@${VPS_HOST}:/srv/sites/whatisthisplace.org/public/"
