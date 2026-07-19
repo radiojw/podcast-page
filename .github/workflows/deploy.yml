@@ -50,6 +50,6 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: >-
-          rsync -av --delete
-          -e "ssh -vvv -i $HOME/.ssh/vps_lax1_deploy -o IdentitiesOnly=yes -o BatchMode=yes -o IPQoS=none -o ConnectTimeout=20 -o ConnectionAttempts=1"
+          timeout 60s rsync -av --delete
+          -e "ssh -vvv -i $HOME/.ssh/vps_lax1_deploy -o IdentitiesOnly=yes -o BatchMode=yes -o IPQoS=none -o KexAlgorithms=curve25519-sha256 -o HostKeyAlgorithms=ssh-ed25519"
           out/ "debian@${VPS_HOST}:/srv/sites/whatisthisplace.org/public/"
