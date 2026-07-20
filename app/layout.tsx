@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import type React from "react"
-import { Analytics } from "@vercel/analytics/react"
 import { Fraunces, Source_Sans_3 } from "next/font/google"
 import Footer from "@/components/Footer"
 import { RSS_URL, FALLBACK_COVER_ART } from "@/lib/rssConstants"
@@ -74,11 +73,11 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://d3t3ozftmdmh3i.cloudfront.net" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://d3ctxlq1ktw2nl.cloudfront.net" crossOrigin="anonymous" />
+        <script defer src="/umami/script.js" data-website-id="dc28116a-eb2a-4492-b1b6-569cc17fa60d" />
       </head>
       <body className={`${fraunces.variable} ${sourceSans.variable} font-sans flex min-h-screen flex-col antialiased`}>
         <main className="flex-grow">{children}</main>
         <Footer />
-        <Analytics />
       </body>
     </html>
   )
