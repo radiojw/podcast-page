@@ -71,6 +71,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://d3t3ozftmdmh3i.cloudfront.net" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://d3ctxlq1ktw2nl.cloudfront.net" crossOrigin="anonymous" />
+      </head>
       <body className={`${fraunces.variable} ${sourceSans.variable} font-sans flex min-h-screen flex-col antialiased`}>
         <main className="flex-grow">{children}</main>
         <Footer />

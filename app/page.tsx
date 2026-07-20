@@ -1,12 +1,32 @@
 import Link from "next/link"
 import Image from "next/image"
+import { Suspense } from "react"
 import PodcastFeed from "@/components/PodcastFeed"
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
-import { withSlugs } from "@/lib/episodeSlug"
+import { withSlugs, type EpisodeWithSlug } from "@/lib/episodeSlug"
 import { formatEpisodeDate, formatFeedDate } from "@/lib/formatEpisode"
-import { FALLBACK_COVER_ART } from "@/lib/rssConstants"
+import {
+  FALLBACK_COVER_ART,
+  FALLBACK_SUMMARY,
+  FALLBACK_TITLE,
+  RSS_URL,
+} from "@/lib/rssConstants"
 import { SITE_URL, PODCAST_HOSTS, PODCAST_LINKS, type PodcastPlatform } from "@/lib/siteConfig"
-import { MapPin, Mic2, Radio, Rss } from "lucide-react"
+import { AlertTriangle, MapPin, Mic2, Radio, Rss } from "lucide-react"
+import type { PodcastData } from "@/types"
+
+type PodcastPageData = Omit<PodcastData, "episodes"> & { episodes: EpisodeWithSlug[] }
+
+const skeletonCards = ["episode-1", "episode-2", "episode-3", "episode-4"]
+
+const fallbackPodcastData: PodcastData = {
+  podcastTitle: FALLBACK_TITLE,
+  podcastSummary: FALLBACK_SUMMARY,
+  podcastImage: FALLBACK_COVER_ART,
+  episodeCount: 0,
+  episodes: [],
+  feedUrl: RSS_URL,
+}
 
 function PlatformIcon({ platform }: { platform: PodcastPlatform }) {
   if (platform === "spotify") {
@@ -24,10 +44,123 @@ function PlatformIcon({ platform }: { platform: PodcastPlatform }) {
   )
 }
 
-export default async function Home() {
-  const rawData = await fetchPodcastData()
+function PodcastPageSkeleton() {
+  return (
+    <div
+      className="min-h-screen bg-brand-cream text-zinc-900"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading podcast episodes"
+    >
+      <span className="sr-only">Loading podcast episodes...</span>
+
+      <section className="bg-brand-forest-dark" aria-hidden="true">
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:px-8 lg:py-20">
+          <div className="motion-safe:animate-pulse">
+            <div className="h-7 w-40 rounded-full bg-white/10" />
+            <div className="mt-6 h-12 w-4/5 rounded-lg bg-white/15 sm:h-14" />
+            <div className="mt-4 h-6 w-64 rounded bg-brand-gold/15" />
+            <div className="mt-7 h-4 w-full max-w-xl rounded bg-white/10" />
+            <div className="mt-3 h-4 w-3/4 max-w-lg rounded bg-white/10" />
+            <div className="mt-9 flex gap-3">
+              <div className="h-11 w-28 rounded-full bg-white/10" />
+              <div className="h-11 w-36 rounded-full bg-white/10" />
+            </div>
+          </div>
+          <div className="mx-auto aspect-square w-64 rounded-2xl bg-white/10 motion-safe:animate-pulse sm:w-72 lg:mr-0 lg:w-80" />
+        </div>
+      </section>
+
+      <main className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16" aria-hidden="true">
+        <div className="mx-auto max-w-6xl motion-safe:animate-pulse">
+          <div className="grid gap-8 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-card sm:p-8 lg:grid-cols-[280px_1fr] lg:items-center">
+            <div className="mx-auto aspect-square w-full max-w-[280px] rounded-2xl bg-zinc-200 lg:mx-0" />
+            <div>
+              <div className="h-4 w-32 rounded bg-brand-gold/25" />
+              <div className="mt-5 h-8 w-4/5 rounded bg-zinc-200" />
+              <div className="mt-5 h-4 w-full rounded bg-zinc-100" />
+              <div className="mt-3 h-4 w-2/3 rounded bg-zinc-100" />
+              <div className="mt-7 h-12 w-48 rounded-full bg-brand-forest/15" />
+            </div>
+          </div>
+
+          <div className="mb-8 mt-14 flex items-end justify-between gap-4">
+            <div>
+              <div className="h-8 w-40 rounded bg-zinc-200" />
+              <div className="mt-2 h-4 w-28 rounded bg-zinc-100" />
+            </div>
+            <div className="hidden h-11 w-72 rounded-full bg-zinc-200 sm:block" />
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            {skeletonCards.map((card) => (
+              <div key={card} className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-card">
+                <div className="flex gap-4">
+                  <div className="h-28 w-28 shrink-0 rounded-xl bg-zinc-200 sm:h-32 sm:w-32" />
+                  <div className="min-w-0 flex-1">
+                    <div className="h-3 w-24 rounded bg-zinc-100" />
+                    <div className="mt-4 h-5 w-full rounded bg-zinc-200" />
+                    <div className="mt-2 h-5 w-4/5 rounded bg-zinc-200" />
+                  </div>
+                </div>
+                <div className="mt-5 h-4 w-full rounded bg-zinc-100" />
+                <div className="mt-3 h-4 w-3/4 rounded bg-zinc-100" />
+                <div className="mt-6 h-px bg-zinc-100" />
+                <div className="mt-4 h-9 w-24 rounded-full bg-brand-forest/10" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function PodcastFeedError() {
+  return (
+    <section
+      role="alert"
+      aria-labelledby="feed-error-heading"
+      className="rounded-2xl border border-brand-gold/60 bg-white px-6 py-12 text-center shadow-card sm:px-12"
+    >
+      <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-gold/20 text-brand-gold-dark">
+        <AlertTriangle className="h-6 w-6" aria-hidden="true" />
+      </span>
+      <h2 id="feed-error-heading" className="mt-5 font-display text-2xl font-semibold text-zinc-950">
+        Episodes are temporarily unavailable
+      </h2>
+      <p className="mx-auto mt-3 max-w-lg leading-relaxed text-zinc-600">
+        We couldn&apos;t refresh the podcast feed right now. The show is still on the road, so
+        please check back in a little while.
+      </p>
+      <Link
+        href={RSS_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-forest px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-forest-light focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+      >
+        <Rss className="h-4 w-4" aria-hidden="true" />
+        Open the RSS feed
+      </Link>
+    </section>
+  )
+}
+
+async function PodcastPage() {
+  let rawData = fallbackPodcastData
+
+  try {
+    rawData = await fetchPodcastData()
+  } catch (error) {
+    console.error("[podcast] Unable to render the podcast feed:", error)
+  }
+
   const podcastData = { ...rawData, episodes: withSlugs(rawData.episodes) }
 
+  return <PodcastHome podcastData={podcastData} />
+}
+
+function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
   const coverArt = podcastData.podcastImage || FALLBACK_COVER_ART
 
   // Preconnect to the cover-art CDN origin (priority hero image / LCP).
@@ -198,9 +331,21 @@ export default async function Home() {
 
       <main className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-6xl">
-          <PodcastFeed initialData={podcastData} />
+          {podcastData.episodes.length > 0 ? (
+            <PodcastFeed initialData={podcastData} />
+          ) : (
+            <PodcastFeedError />
+          )}
         </div>
       </main>
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<PodcastPageSkeleton />}>
+      <PodcastPage />
+    </Suspense>
   )
 }
