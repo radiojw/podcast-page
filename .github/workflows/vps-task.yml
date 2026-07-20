@@ -1,0 +1,40 @@
+# Temporary ops workflow: runs the committed .github/vps/task.sh on the VPS.
+# No inputs on purpose — the executed content is always the audited, committed
+# script. Remove this file when the analytics setup is finished.
+name: VPS Task
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vps-task
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Configure SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_lax1_deploy
+          chmod 600 ~/.ssh/vps_lax1_deploy
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Run task on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: >-
+          timeout 480s ssh
+          -i "$HOME/.ssh/vps_lax1_deploy" -o IdentitiesOnly=yes -o BatchMode=yes
+          -o IPQoS=none -o KexAlgorithms=curve25519-sha256 -o HostKeyAlgorithms=ssh-ed25519
+          "debian@${VPS_HOST}" 'bash -s' < .github/vps/task.sh
