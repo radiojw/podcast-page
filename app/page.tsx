@@ -214,7 +214,7 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
       {coverOrigin && <link rel="preconnect" href={coverOrigin} />}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026") }}
       />
       <section className="relative overflow-hidden bg-brand-forest-dark text-white">
         {/* Blurred cover art atmosphere from RSS */}

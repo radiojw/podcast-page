@@ -309,6 +309,11 @@ function sortEpisodesByDate(episodes: Episode[]) {
 }
 
 export function parseRssFeed(xmlData: string): PodcastData {
+  const MAX_FEED_BYTES = 10_000_000
+  if (xmlData.length > MAX_FEED_BYTES) {
+    throw new Error("RSS feed exceeds maximum allowed size")
+  }
+
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: "@_",

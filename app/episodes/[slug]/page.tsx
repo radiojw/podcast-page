@@ -94,7 +94,7 @@ export default async function EpisodePage({
 
   return (
     <div className="min-h-screen bg-brand-cream text-zinc-900">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026") }} />
 
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
         <Link
