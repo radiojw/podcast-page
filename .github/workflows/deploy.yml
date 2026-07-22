@@ -1,9 +1,9 @@
 name: Deploy to VPS
 
 on:
-  push:
-    branches:
-      - main
+  # Deploys are handled by the pull-based systemd timer on the VPS (/srv/deploy).
+  # CI validation still runs on push via ci.yml. Manual/fallback runs only.
+  workflow_dispatch:
 
 permissions:
   contents: read
