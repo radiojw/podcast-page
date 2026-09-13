@@ -8,6 +8,15 @@ import {
   FALLBACK_SHOW_LINK,
   FALLBACK_SUMMARY,
   FALLBACK_TITLE,
+  MAX_AUTHOR_LENGTH,
+  MAX_CATEGORY_LENGTH,
+  MAX_DURATION_LENGTH,
+  MAX_EPISODES,
+  MAX_FEED_BYTES,
+  MAX_GUID_LENGTH,
+  MAX_SUMMARY_LENGTH,
+  MAX_SUBTITLE_LENGTH,
+  MAX_TITLE_LENGTH,
 } from "./rssConstants"
 
 type RssCategory = {
@@ -56,6 +65,9 @@ type ParsedRss = {
 }
 
 const SUMMARY_PREVIEW_LENGTH = 220
+const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"])
+const AUDIO_TYPE_PATTERN = /^audio\/[a-z0-9.+-]+$/
+const UNSAFE_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g
 
 function getText(value: unknown): string {
   if (typeof value === "string" || typeof value === "number") {
@@ -83,6 +95,14 @@ function safeFromCharCode(code: number) {
   return String.fromCharCode(code)
 }
 
+function stripUnsafeChars(value: string) {
+  return value.replace(UNSAFE_CHARS, " ")
+}
+
+function truncate(value: string, maxLength: number) {
+  return value.length <= maxLength ? value : value.slice(0, maxLength).trimEnd()
+}
+
 function decodeHtmlEntities(value: string) {
   let decoded = value
 
@@ -108,7 +128,7 @@ function decodeHtmlEntities(value: string) {
 }
 
 export function formatText(value: unknown) {
-  return decodeHtmlEntities(getText(value)).trim()
+  return stripUnsafeChars(decodeHtmlEntities(getText(value))).trim()
 }
 
 function htmlToPlainText(value: unknown) {
@@ -128,8 +148,12 @@ function htmlToPlainText(value: unknown) {
   return text
 }
 
+function formatSingleLine(value: unknown, maxLength: number) {
+  return truncate(htmlToPlainText(value).replace(/\s+/g, " ").trim(), maxLength)
+}
+
 function formatSummary(value: unknown, fallback = "No description available.") {
-  const text = htmlToPlainText(value)
+  const text = truncate(htmlToPlainText(value), MAX_SUMMARY_LENGTH)
 
   if (!text) {
     return fallback
@@ -164,10 +188,22 @@ export function safeHttpsUrl(value: unknown, allowedHosts?: Set<string>) {
       return ""
     }
 
-    if (allowedHosts && !allowedHosts.has(url.hostname.toLowerCase())) {
+    if (url.username || url.password) {
       return ""
     }
 
+    if (url.port && url.port !== "443") {
+      return ""
+    }
+
+    const hostname = url.hostname.replace(/\.$/, "").toLowerCase()
+
+    if (!hostname || (allowedHosts && !allowedHosts.has(hostname))) {
+      return ""
+    }
+
+    url.hostname = hostname
+    url.hash = ""
     return url.toString()
   } catch {
     return ""
@@ -200,7 +236,7 @@ function parsePositiveInt(value: unknown) {
   const text = formatText(value)
   if (!text) return undefined
   const parsed = Number.parseInt(text, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+  return Number.isFinite(parsed) && parsed > 0 && parsed <= 9999 ? parsed : undefined
 }
 
 function parseExplicit(value: unknown) {
@@ -216,7 +252,7 @@ function parseIsoDate(value: unknown) {
 
   const parsed = new Date(text)
   if (Number.isNaN(parsed.getTime())) {
-    return text
+    return ""
   }
 
   return parsed.toISOString()
@@ -229,7 +265,7 @@ function parseCategories(value: RssCategory | RssCategory[] | undefined): string
   const labels: string[] = []
 
   for (const category of categories) {
-    const parent = formatText(category["@_text"])
+    const parent = truncate(formatText(category["@_text"]), MAX_CATEGORY_LENGTH)
     const children = category["itunes:category"]
       ? Array.isArray(category["itunes:category"])
         ? category["itunes:category"]
@@ -241,7 +277,7 @@ function parseCategories(value: RssCategory | RssCategory[] | undefined): string
     }
 
     for (const child of children) {
-      const childLabel = formatText(child["@_text"])
+      const childLabel = truncate(formatText(child["@_text"]), MAX_CATEGORY_LENGTH)
       if (childLabel) {
         labels.push(parent ? `${parent} › ${childLabel}` : childLabel)
       }
@@ -252,15 +288,19 @@ function parseCategories(value: RssCategory | RssCategory[] | undefined): string
 }
 
 function parseGuid(value: unknown, fallbackIndex: number) {
-  const guid = formatText(value)
+  const guid = truncate(formatText(value), MAX_GUID_LENGTH)
   return guid || `episode-${fallbackIndex}`
+}
+
+function parseAudioType(value: unknown) {
+  const type = formatText(value).toLowerCase()
+  return AUDIO_TYPE_PATTERN.test(type) ? type : "audio/mpeg"
 }
 
 function parseEnclosure(item: RssItem) {
   const rawUrl = formatText(item.enclosure?.["@_url"])
   const directUrl = extractDirectAudioUrl(rawUrl)
   const enclosureUrl = directUrl || safeHttpsUrl(rawUrl, ALLOWED_AUDIO_HOSTS)
-  const enclosureType = formatText(item.enclosure?.["@_type"])
   const lengthText = formatText(item.enclosure?.["@_length"])
   const fileSize = lengthText ? Number.parseInt(lengthText, 10) : Number.NaN
 
@@ -270,7 +310,7 @@ function parseEnclosure(item: RssItem) {
 
   return {
     url: enclosureUrl,
-    type: enclosureType.startsWith("audio/") ? enclosureType : "audio/mpeg",
+    type: parseAudioType(item.enclosure?.["@_type"]),
     // Only surface a byte count we can trust; never leak unparseable text.
     length: Number.isFinite(fileSize) && fileSize > 0 ? String(fileSize) : "",
   }
@@ -279,15 +319,15 @@ function parseEnclosure(item: RssItem) {
 function parseEpisode(item: RssItem, index: number, podcastImage?: string): Episode {
   const imageUrl =
     safeHttpsUrl(item["itunes:image"]?.["@_href"], ALLOWED_IMAGE_HOSTS) || podcastImage || undefined
-  const duration = formatText(item["itunes:duration"])
-  const subtitle = formatText(item["itunes:subtitle"])
+  const duration = truncate(formatText(item["itunes:duration"]), MAX_DURATION_LENGTH)
+  const subtitle = formatSingleLine(item["itunes:subtitle"], MAX_SUBTITLE_LENGTH)
   const summarySource =
     item["content:encoded"] || item["itunes:summary"] || item.description || subtitle
   const summary = formatSummary(summarySource)
   const summaryPreview = buildSummaryPreview(summary)
 
   return {
-    title: formatText(item.title),
+    title: formatSingleLine(item.title, MAX_TITLE_LENGTH),
     pubDate: parseIsoDate(item.pubDate),
     link: safeHttpsUrl(item.link, ALLOWED_LINK_HOSTS) || FALLBACK_SHOW_LINK,
     guid: parseGuid(item.guid, index),
@@ -299,7 +339,7 @@ function parseEpisode(item: RssItem, index: number, podcastImage?: string): Epis
     duration: duration || undefined,
     episodeNumber: parsePositiveInt(item["itunes:episode"]),
     seasonNumber: parsePositiveInt(item["itunes:season"]),
-    episodeType: formatText(item["itunes:episodeType"]) || undefined,
+    episodeType: formatSingleLine(item["itunes:episodeType"], 32) || undefined,
     explicit: parseExplicit(item["itunes:explicit"]),
   }
 }
@@ -308,8 +348,28 @@ function sortEpisodesByDate(episodes: Episode[]) {
   return [...episodes].sort((a, b) => compareByPubDate(a, b, "newest"))
 }
 
+function stripDangerousKeys<T>(value: T): T {
+  if (!value || typeof value !== "object") {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => stripDangerousKeys(entry)) as T
+  }
+
+  const cleaned: Record<string, unknown> = Object.create(null)
+
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    if (DANGEROUS_KEYS.has(key)) {
+      continue
+    }
+    cleaned[key] = stripDangerousKeys(child)
+  }
+
+  return cleaned as T
+}
+
 export function parseRssFeed(xmlData: string): PodcastData {
-  const MAX_FEED_BYTES = 10_000_000
   if (xmlData.length > MAX_FEED_BYTES) {
     throw new Error("RSS feed exceeds maximum allowed size")
   }
@@ -322,9 +382,13 @@ export function parseRssFeed(xmlData: string): PodcastData {
     cdataPropName: "#text",
     maxNestedTags: 100,
     allowBooleanAttributes: true,
+    ignorePiTags: true,
+    ignoreDeclaration: true,
+    transformTagName: (tagName: string) =>
+      DANGEROUS_KEYS.has(tagName) ? "__ignored" : tagName,
   })
 
-  const result = parser.parse(xmlData) as ParsedRss
+  const result = stripDangerousKeys(parser.parse(xmlData) as ParsedRss)
   const channel = result.rss?.channel
 
   if (!channel) {
@@ -343,9 +407,9 @@ export function parseRssFeed(xmlData: string): PodcastData {
       .filter((episode) => episode.title !== "" || episode.enclosure)
       // …then backfill a display title for the kept-but-untitled ones.
       .map((episode) => (episode.title ? episode : { ...episode, title: "Untitled episode" }))
-  )
+  ).slice(0, MAX_EPISODES)
 
-  const podcastTitle = formatText(channel.title) || FALLBACK_TITLE
+  const podcastTitle = formatSingleLine(channel.title, MAX_TITLE_LENGTH) || FALLBACK_TITLE
   const categories = parseCategories(channel["itunes:category"])
 
   return {
@@ -356,7 +420,7 @@ export function parseRssFeed(xmlData: string): PodcastData {
     ),
     podcastImage: podcastImage || undefined,
     podcastLink: safeHttpsUrl(channel.link, ALLOWED_LINK_HOSTS) || undefined,
-    podcastAuthor: formatText(channel["itunes:author"]) || undefined,
+    podcastAuthor: formatSingleLine(channel["itunes:author"], MAX_AUTHOR_LENGTH) || undefined,
     podcastCategories: categories,
     lastBuildDate: parseIsoDate(channel.lastBuildDate) || undefined,
     feedUrl: undefined,

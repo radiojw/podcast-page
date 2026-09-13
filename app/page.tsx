@@ -12,6 +12,7 @@ import {
   RSS_URL,
 } from "@/lib/rssConstants"
 import { SITE_URL, PODCAST_HOSTS, PODCAST_LINKS, type PodcastPlatform } from "@/lib/siteConfig"
+import JsonLd from "@/components/JsonLd"
 import { AlertTriangle, MapPin, Mic2, Radio, Rss } from "lucide-react"
 import type { PodcastData } from "@/types"
 
@@ -212,10 +213,7 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
   return (
     <div className="min-h-screen bg-brand-cream text-zinc-900 selection:bg-brand-gold selection:text-brand-forest-dark">
       {coverOrigin && <link rel="preconnect" href={coverOrigin} />}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026") }}
-      />
+      <JsonLd data={jsonLd} />
       <section className="relative overflow-hidden bg-brand-forest-dark text-white">
         {/* Blurred cover art atmosphere from RSS */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
