@@ -1,8 +1,8 @@
 name: Deploy to VPS
 
 on:
-  # Deploys are handled by the pull-based systemd timer on the VPS (/srv/deploy).
-  # CI validation still runs on push via ci.yml. Manual/fallback runs only.
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -18,10 +18,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -37,19 +37,19 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_lax1_deploy
-          chmod 600 ~/.ssh/vps_lax1_deploy
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/vps_lax1_deploy
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
-          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_caddy_deploy
+          chmod 600 ~/.ssh/vps_caddy_deploy
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy static export
+      - name: Deploy static export to Caddy VM
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
-        run: >-
-          timeout 60s rsync -av --delete
-          -e "ssh -vvv -i $HOME/.ssh/vps_lax1_deploy -o IdentitiesOnly=yes -o BatchMode=yes -o IPQoS=none -o KexAlgorithms=curve25519-sha256 -o HostKeyAlgorithms=ssh-ed25519"
-          out/ "debian@${VPS_HOST}:/srv/sites/whatisthisplace.org/public/"
+        run: |
+          set -euo pipefail
+          test -d out
+          # Caddy VM 101 (51.81.226.177). Prefer root until debian deploy user is approved.
+          rsync -az --delete \
+            -e "ssh -i $HOME/.ssh/vps_caddy_deploy -o IdentitiesOnly=yes -o BatchMode=yes" \
+            out/ "root@${VPS_HOST}:/srv/sites/whatisthisplace.org/public/"
