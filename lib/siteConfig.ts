@@ -1,14 +1,53 @@
 /** Single source of truth for site identity, canonical URL, and listen links. */
 
-function normalizeUrl(raw: string): string {
-  const withProtocol = /^https?:\/\//.test(raw) ? raw : `https://${raw}`
-  return withProtocol.replace(/\/+$/, "")
+const DEFAULT_SITE_URL = "https://whatisthisplace.org"
+
+/**
+ * Resolve a build-time origin. Rejects credentials, non-https hosts (except
+ * loopback for local previews), and non-default https ports so a poisoned
+ * NEXT_PUBLIC_BASE_URL cannot rewrite canonical URLs or JSON-LD.
+ */
+export function resolveSiteUrl(raw: string | undefined): string {
+  if (!raw?.trim()) {
+    return DEFAULT_SITE_URL
+  }
+
+  try {
+    const trimmed = raw.trim()
+    const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+    const url = new URL(withProtocol)
+
+    if (url.username || url.password) {
+      return DEFAULT_SITE_URL
+    }
+
+    const hostname = url.hostname.replace(/\.$/, "").toLowerCase()
+    const isLoopback =
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]"
+
+    if (isLoopback) {
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        return DEFAULT_SITE_URL
+      }
+      return url.origin.replace(/\/+$/, "")
+    }
+
+    if (url.protocol !== "https:") {
+      return DEFAULT_SITE_URL
+    }
+
+    if (url.port && url.port !== "443") {
+      return DEFAULT_SITE_URL
+    }
+
+    return `https://${hostname}`
+  } catch {
+    return DEFAULT_SITE_URL
+  }
 }
 
 /** Absolute, protocol-qualified, trailing-slash-free site origin. */
-export const SITE_URL = normalizeUrl(
-  process.env.NEXT_PUBLIC_BASE_URL || "https://whatisthisplace.org"
-)
+export const SITE_URL = resolveSiteUrl(process.env.NEXT_PUBLIC_BASE_URL)
 
 export const PODCAST_TITLE = "What Is This Place"
 export const PODCAST_HOSTS = "Neil Real & Shredz Pali"

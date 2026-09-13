@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX, X } from "lucide-react"
 import EpisodeCover from "./EpisodeCover"
 import { formatDuration } from "@/lib/formatEpisode"
@@ -252,8 +253,19 @@ export default function PodcastPlayer({
     ? formatDuration(activeEpisode.duration)
     : formatTime(duration)
 
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-brand-ink/95 text-white shadow-2xl backdrop-blur-xl">
+  const player = (
+    <div
+      data-player="now-playing"
+      role="region"
+      aria-label="Now playing"
+      className="fixed inset-x-0 bottom-0 z-[100] border-t border-white/10 bg-brand-ink/95 text-white shadow-[0_-12px_40px_rgba(0,0,0,0.35)] backdrop-blur-2xl"
+    >
+      <div
+        className="absolute inset-x-0 top-0 h-0.5 bg-zinc-800"
+        aria-hidden="true"
+      >
+        <div className="h-full bg-brand-gold" style={{ width: `${sliderValue}%` }} />
+      </div>
       <audio
         ref={audioRef}
         src={activeEpisode.enclosure?.url}
@@ -263,7 +275,7 @@ export default function PodcastPlayer({
         preload="auto"
       />
 
-      <div className="mx-auto max-w-6xl px-4 py-3.5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
           <div className="flex min-w-0 items-center gap-3">
             <EpisodeCover
@@ -398,4 +410,7 @@ export default function PodcastPlayer({
       </div>
     </div>
   )
+
+  if (typeof document === "undefined") return player
+  return createPortal(player, document.body)
 }

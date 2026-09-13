@@ -4,18 +4,26 @@
 
 :root {
   color-scheme: light;
-  --brand-cream: #f8f6f2;
-  --brand-forest: #193f3a;
-  --brand-gold: #e9c46a;
+  --brand-cream: #f3efe8;
+  --brand-forest: #143833;
+  --brand-gold: #e2b84a;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  scroll-padding-top: 4.5rem;
+}
+
 body {
   margin: 0;
   background: var(--brand-cream);
+}
+
+#main-content:focus {
+  outline: none;
 }
 
 @layer utilities {
@@ -24,12 +32,23 @@ body {
   }
 
   .hero-art-blur {
-    filter: blur(48px) saturate(1.2);
-    transform: scale(1.15);
+    filter: blur(56px) saturate(1.25);
+    transform: scale(1.18);
   }
 
   .grain-overlay {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -66,7 +85,6 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
-/* Keyboard focus indicator for sliders (progress + volume) */
 input[type="range"]:focus-visible {
   outline: 2px solid var(--brand-gold);
   outline-offset: 3px;
@@ -74,34 +92,36 @@ input[type="range"]:focus-visible {
 }
 
 input[type="range"]:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 4px rgba(233, 196, 106, 0.55);
+  box-shadow: 0 0 0 4px rgba(226, 184, 74, 0.55);
 }
 
 input[type="range"]:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 4px rgba(233, 196, 106, 0.55);
+  box-shadow: 0 0 0 4px rgba(226, 184, 74, 0.55);
 }
 
-/* Premium scrollbar */
+audio {
+  accent-color: var(--brand-forest);
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1ede6;
+  background: #efeae1;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #dcd7cd;
+  background: #d6cfc3;
   border-radius: 5px;
-  border: 2px solid #f1ede6;
+  border: 2px solid #efeae1;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #b8b1a5;
 }
 
-/* Equalizer animations */
 @keyframes eq-bounce-1 {
   0%, 100% { transform: scaleY(0.35); }
   50% { transform: scaleY(1); }

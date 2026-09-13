@@ -8,6 +8,7 @@ import { buildEpisodeSlugs, getEpisodeBySlug } from "@/lib/episodeSlug"
 import { formatEpisodeDate, formatDuration, formatFileSize, getEpisodeLabel } from "@/lib/formatEpisode"
 import { FALLBACK_COVER_ART } from "@/lib/rssConstants"
 import { SITE_URL, PODCAST_TITLE } from "@/lib/siteConfig"
+import JsonLd from "@/components/JsonLd"
 
 export const dynamicParams = false
 
@@ -94,21 +95,21 @@ export default async function EpisodePage({
 
   return (
     <div className="min-h-screen bg-brand-cream text-zinc-900">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026") }} />
+      <JsonLd data={jsonLd} />
 
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:py-16">
         <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 rounded text-sm font-semibold text-brand-forest transition-colors hover:text-brand-forest-light focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
+          href="/#episodes"
+          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/70 px-3 py-1.5 text-sm font-semibold text-brand-forest shadow-sm backdrop-blur-sm transition-colors hover:border-brand-forest/30 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>All episodes</span>
         </Link>
 
         <article className="mt-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            <div className="relative aspect-square w-40 shrink-0 overflow-hidden rounded-2xl bg-zinc-200 shadow-cover ring-1 ring-black/5 sm:w-48">
-              <Image src={image} alt={episode.title} fill sizes="(max-width: 640px) 160px, 192px" priority className="object-cover" />
+          <div className="flex flex-col gap-7 sm:flex-row sm:items-start">
+            <div className="relative aspect-square w-44 shrink-0 overflow-hidden rounded-[1.5rem] bg-zinc-200 shadow-cover ring-2 ring-brand-gold/25 sm:w-52">
+              <Image src={image} alt={episode.title} fill sizes="(max-width: 640px) 176px, 208px" priority className="object-cover" />
             </div>
 
             <div className="min-w-0">
@@ -129,15 +130,15 @@ export default async function EpisodePage({
                 {episode.enclosure?.length && <span>{formatFileSize(episode.enclosure.length)}</span>}
               </div>
 
-              <h1 className="mt-3 font-display text-balance text-3xl font-semibold leading-tight text-zinc-950">
+              <h1 className="mt-4 font-display text-balance text-3xl font-semibold leading-[1.15] text-zinc-950 sm:text-4xl">
                 {episode.title}
               </h1>
-              {episode.subtitle && <p className="mt-2 text-base text-zinc-500">{episode.subtitle}</p>}
+              {episode.subtitle && <p className="mt-3 text-base leading-relaxed text-zinc-500">{episode.subtitle}</p>}
             </div>
           </div>
 
           {episode.enclosure && (
-            <div className="mt-8">
+            <div className="mt-10 rounded-[1.5rem] border border-zinc-200/70 bg-white p-4 shadow-card sm:p-5">
               <audio controls preload="none" src={episode.enclosure.url} className="w-full">
                 Your browser does not support the audio element.
               </audio>
@@ -156,7 +157,7 @@ export default async function EpisodePage({
             </Link>
           </div>
 
-          <div className="mt-8 whitespace-pre-line text-base leading-relaxed text-zinc-700">
+          <div className="mt-10 whitespace-pre-line text-lg leading-8 text-zinc-700">
             {episode.summary}
           </div>
         </article>

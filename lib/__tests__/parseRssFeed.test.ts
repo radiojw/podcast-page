@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest"
 import { parseRssFeed, formatText, safeHttpsUrl } from "../parseRssFeed"
-import { ALLOWED_AUDIO_HOSTS, ALLOWED_IMAGE_HOSTS, ALLOWED_LINK_HOSTS } from "../rssConstants"
+import { serializeJsonLd } from "../serializeJsonLd"
+import {
+  ALLOWED_AUDIO_HOSTS,
+  ALLOWED_IMAGE_HOSTS,
+  ALLOWED_LINK_HOSTS,
+  MAX_FEED_BYTES,
+} from "../rssConstants"
 
 const SAMPLE_FEED = `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
@@ -54,6 +60,27 @@ describe("safeHttpsUrl", () => {
   it("returns empty string for malformed input", () => {
     expect(safeHttpsUrl("not a url", ALLOWED_IMAGE_HOSTS)).toBe("")
     expect(safeHttpsUrl(undefined)).toBe("")
+  })
+
+  it("rejects javascript: URLs", () => {
+    expect(safeHttpsUrl("javascript:alert(1)", ALLOWED_LINK_HOSTS)).toBe("")
+    expect(safeHttpsUrl("javascript:https://anchor.fm/x", ALLOWED_AUDIO_HOSTS)).toBe("")
+  })
+
+  it("rejects URLs with credentials", () => {
+    expect(safeHttpsUrl("https://user:pass@anchor.fm/x.mp3", ALLOWED_AUDIO_HOSTS)).toBe("")
+    expect(safeHttpsUrl("https://user@open.spotify.com/episode/x", ALLOWED_LINK_HOSTS)).toBe("")
+  })
+
+  it("rejects non-443 ports", () => {
+    expect(safeHttpsUrl("https://anchor.fm:444/x.mp3", ALLOWED_AUDIO_HOSTS)).toBe("")
+    expect(safeHttpsUrl("https://anchor.fm:8443/x.mp3", ALLOWED_AUDIO_HOSTS)).toBe("")
+  })
+
+  it("accepts an explicit default https port", () => {
+    expect(safeHttpsUrl("https://anchor.fm:443/x.mp3", ALLOWED_AUDIO_HOSTS)).toBe(
+      "https://anchor.fm/x.mp3"
+    )
   })
 })
 
@@ -127,5 +154,57 @@ describe("parseRssFeed", () => {
       const host = new URL(ep.link).hostname
       expect(ALLOWED_LINK_HOSTS.has(host)).toBe(true)
     }
+  })
+
+  it("rejects javascript, credentialed, and non-443 URLs", () => {
+    expect(safeHttpsUrl("javascript:alert(1)", ALLOWED_LINK_HOSTS)).toBe("")
+    expect(safeHttpsUrl("https://user:pass@anchor.fm/x", ALLOWED_AUDIO_HOSTS)).toBe("")
+    expect(safeHttpsUrl("https://anchor.fm:8443/x.mp3", ALLOWED_AUDIO_HOSTS)).toBe("")
+  })
+
+  it("strips HTML from titles and never keeps an invalid pubDate", () => {
+    const feed = SAMPLE_FEED.replace(
+      "<title><![CDATA[Episode 2: The Newer One]]></title>",
+      "<title><![CDATA[<em>Episode 2</em>]]></title>"
+    ).replace("<pubDate>Wed, 25 Jun 2025 12:00:00 GMT</pubDate>", "<pubDate>not-a-date</pubDate>")
+    const parsed = parseRssFeed(feed)
+    const ep = parsed.episodes.find((e) => e.guid === "guid-aaa")
+    expect(ep?.title).toBe("Episode 2")
+    expect(ep?.title).not.toContain("<")
+    expect(ep?.pubDate).toBe("")
+  })
+
+  it("throws when the feed is larger than the size cap", () => {
+    expect(() => parseRssFeed("x".repeat(MAX_FEED_BYTES + 1))).toThrow(/maximum allowed size/)
+  })
+
+  it("ignores prototype-polluting element names", () => {
+    const feed = SAMPLE_FEED.replace(
+      "<itunes:author>Neil Real &amp; Shredz Pali</itunes:author>",
+      "<itunes:author>Neil Real &amp; Shredz Pali</itunes:author><__proto__>polluted</__proto__><constructor><prototype>polluted</prototype></constructor>"
+    )
+    const parsed = parseRssFeed(feed)
+    expect(parsed.podcastTitle).toBe("What Is This Place")
+    expect(Object.prototype).not.toHaveProperty("polluted")
+    expect(Object.hasOwn(parsed, "__proto__")).toBe(false)
+    expect(Object.hasOwn(parsed, "constructor")).toBe(false)
+  })
+
+  it("does not leave raw </script> in serialized JSON-LD from RSS titles", () => {
+    const feed = SAMPLE_FEED.replace(
+      "Episode 2: The Newer One",
+      "Break </script><script>alert(1)</script> out"
+    )
+    const parsed = parseRssFeed(feed)
+    const serialized = serializeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "PodcastEpisode",
+      name: parsed.episodes[0].title,
+    })
+
+    expect(parsed.episodes[0].title).not.toMatch(/<[^>]*>/)
+    expect(serialized.toLowerCase()).not.toContain("</script>")
+    expect(serialized).not.toContain("<")
+    expect(serialized).not.toContain(">")
   })
 })

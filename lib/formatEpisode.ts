@@ -34,28 +34,39 @@ export function formatEpisodeDate(date: string) {
 export function formatDuration(duration?: string) {
   if (!duration) return ""
 
-  if (duration.includes(":")) {
-    const parts = duration.split(":").map((part) => part.trim())
+  const value = duration.trim()
+  if (!value) return ""
+
+  if (value.includes(":")) {
+    const parts = value.split(":").map((part) => part.trim())
+    if (!parts.every((part) => /^\d{1,4}$/.test(part))) {
+      return ""
+    }
+
+    const nums = parts.map(Number)
     if (parts.length === 3) {
-      const hours = Number(parts[0])
-      const minutes = Number(parts[1])
-      const seconds = Number(parts[2])
+      const [hours, minutes, seconds] = nums
       if (hours > 0) {
         return `${hours}h ${minutes}m`
       }
       return `${minutes}:${seconds.toString().padStart(2, "0")}`
     }
-    return duration.startsWith("00:") ? duration.slice(3) : duration
+    if (parts.length === 2) {
+      const [minutes, seconds] = nums
+      return `${minutes}:${seconds.toString().padStart(2, "0")}`
+    }
+    return ""
   }
 
-  const secs = Number.parseInt(duration, 10)
-  if (!Number.isNaN(secs)) {
-    const minutes = Math.floor(secs / 60)
-    const seconds = secs % 60
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`
+  // Reject garbage / XSS-like strings: the whole value must be a non-negative integer.
+  if (!/^\d{1,8}$/.test(value)) {
+    return ""
   }
 
-  return duration
+  const secs = Number.parseInt(value, 10)
+  const minutes = Math.floor(secs / 60)
+  const seconds = secs % 60
+  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`
 }
 
 export function extractEpisodeNumber(title: string) {

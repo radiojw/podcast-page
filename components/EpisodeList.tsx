@@ -61,10 +61,10 @@ export default function EpisodeList({
         return (
           <article
             key={episode.guid}
-            className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover ${
+            className={`group relative flex flex-col overflow-hidden rounded-[1.5rem] border bg-white/90 shadow-card backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover ${
               isCurrent
                 ? "border-brand-gold ring-2 ring-brand-gold/30"
-                : "border-zinc-200/80 hover:border-zinc-300"
+                : "border-zinc-200/70 hover:border-zinc-300"
             }`}
           >
             {isCurrent && (
@@ -106,7 +106,7 @@ export default function EpisodeList({
                     )}
                   </div>
 
-                  <h3 className="mt-2 font-display text-base font-semibold leading-snug text-zinc-900 transition-colors group-hover:text-brand-forest sm:text-lg flex items-start gap-2 justify-between">
+                  <h3 className="mt-2 flex items-start justify-between gap-2 font-display text-base font-semibold leading-snug text-zinc-900 transition-colors group-hover:text-brand-forest sm:text-lg">
                     <span className="flex-grow">
                       <Link
                         href={`/episodes/${episode.slug}`}

@@ -9,16 +9,16 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          cream: "#f8f6f2",
-          parchment: "#f1ede6",
-          sand: "#e8e2d6",
-          gold: "#e9c46a",
+          cream: "#f3efe8",
+          parchment: "#efeae1",
+          sand: "#e4dccb",
+          gold: "#e2b84a",
           "gold-dark": "#b58e2a",
-          "gold-light": "#f7e9c7",
-          forest: "#193f3a",
-          "forest-light": "#21524b",
-          "forest-dark": "#0f2d29",
-          ink: "#17130f",
+          "gold-light": "#f4e3b5",
+          forest: "#143833",
+          "forest-light": "#1d4f47",
+          "forest-dark": "#0c2422",
+          ink: "#12110f",
         },
       },
       fontFamily: {

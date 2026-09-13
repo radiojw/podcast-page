@@ -38,6 +38,17 @@ describe("formatDuration", () => {
   it("returns empty string for missing duration", () => {
     expect(formatDuration(undefined)).toBe("")
   })
+
+  it("does not echo untrusted non-duration strings", () => {
+    expect(formatDuration("<script>alert(1)</script>")).toBe("")
+    expect(formatDuration("not-a-duration")).toBe("")
+    expect(formatDuration("10<img src=x onerror=alert(1)>")).toBe("")
+    expect(formatDuration("javascript:alert(1)")).toBe("")
+    expect(formatDuration("1h 2m")).toBe("")
+    expect(formatDuration("12:34:56:78")).toBe("")
+    expect(formatDuration("1e10")).toBe("")
+    expect(formatDuration("-30")).toBe("")
+  })
 })
 
 describe("formatFileSize", () => {
