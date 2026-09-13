@@ -1,8 +1,8 @@
 name: Deploy to VPS
 
 on:
-  push:
-    branches: [main]
+  # Primary deploys: pull-deploy.timer on Caddy VM (.177) every 5 min via /srv/deploy/deploy.sh
+  # This workflow is a manual fallback only (avoids racing the pull timer on every push).
   workflow_dispatch:
 
 permissions:
@@ -49,7 +49,6 @@ jobs:
         run: |
           set -euo pipefail
           test -d out
-          # Caddy VM 101 (51.81.226.177). Prefer root until debian deploy user is approved.
           rsync -az --delete \
             -e "ssh -i $HOME/.ssh/vps_caddy_deploy -o IdentitiesOnly=yes -o BatchMode=yes" \
             out/ "root@${VPS_HOST}:/srv/sites/whatisthisplace.org/public/"
