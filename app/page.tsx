@@ -1,6 +1,8 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Suspense } from "react"
+import JsonLd from "@/components/JsonLd"
+import PlatformIcon from "@/components/PlatformIcon"
 import PodcastFeed from "@/components/PodcastFeed"
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
 import { withSlugs, type EpisodeWithSlug } from "@/lib/episodeSlug"
@@ -11,8 +13,7 @@ import {
   FALLBACK_TITLE,
   RSS_URL,
 } from "@/lib/rssConstants"
-import { SITE_URL, PODCAST_HOSTS, PODCAST_LINKS, type PodcastPlatform } from "@/lib/siteConfig"
-import JsonLd from "@/components/JsonLd"
+import { SITE_URL, PODCAST_HOSTS, PODCAST_LINKS } from "@/lib/siteConfig"
 import { AlertTriangle, MapPin, Mic2, Radio, Rss } from "lucide-react"
 import type { PodcastData } from "@/types"
 
@@ -29,22 +30,6 @@ const fallbackPodcastData: PodcastData = {
   feedUrl: RSS_URL,
 }
 
-function PlatformIcon({ platform }: { platform: PodcastPlatform }) {
-  if (platform === "spotify") {
-    return (
-      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
-      </svg>
-    )
-  }
-
-  return (
-    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M5.34 0A5.328 5.328 0 000 5.34v13.32A5.328 5.328 0 005.34 24h13.32A5.328 5.328 0 0024 18.66V5.34A5.328 5.328 0 0018.66 0zm6.525 2.568c2.336 0 4.448.902 6.056 2.587 1.224 1.272 1.912 2.619 2.264 4.392.12.59.12 2.2.007 2.864a8.506 8.506 0 01-3.24 5.296c-.608.46-2.096 1.261-2.336 1.261-.088 0-.096-.091-.056-.46.072-.592.144-.715.48-.856.536-.224 1.448-.874 2.008-1.435a7.644 7.644 0 002.008-3.536c.208-.824.184-2.656-.048-3.504-.728-2.696-2.928-4.792-5.624-5.352-.784-.16-2.208-.16-3 0-2.728.56-4.984 2.76-5.672 5.528-.184.752-.184 2.584 0 3.336.456 1.832 1.64 3.512 3.192 4.512.304.2.672.408.824.472.336.144.408.264.472.856.04.36.03.464-.056.464-.056 0-.464-.176-.896-.384l-.04-.03c-2.472-1.216-4.056-3.274-4.632-6.012-.144-.706-.168-2.392-.03-3.04.36-1.74 1.048-3.1 2.192-4.304 1.648-1.737 3.768-2.656 6.128-2.656zm.134 2.81c.409.004.803.04 1.106.106 2.784.62 4.76 3.408 4.376 6.174-.152 1.114-.536 2.03-1.216 2.88-.336.43-1.152 1.15-1.296 1.15-.023 0-.048-.272-.048-.603v-.605l.416-.496c1.568-1.878 1.456-4.502-.256-6.224-.664-.67-1.432-1.064-2.424-1.246-.64-.118-.776-.118-1.448-.008-1.02.167-1.81.562-2.512 1.256-1.72 1.704-1.832 4.342-.264 6.222l.413.496v.608c0 .336-.027.608-.06.608-.03 0-.264-.16-.512-.36l-.034-.011c-1.868-1.446-2.765-3.514-2.508-5.814.168-1.439.76-2.618 1.824-3.634 1.296-1.232 2.884-1.829 4.443-1.799z" />
-    </svg>
-  )
-}
-
 function PodcastPageSkeleton() {
   return (
     <div
@@ -56,26 +41,26 @@ function PodcastPageSkeleton() {
       <span className="sr-only">Loading podcast episodes...</span>
 
       <section className="bg-brand-forest-dark" aria-hidden="true">
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:px-8 lg:py-20">
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:px-8 lg:py-24">
           <div className="motion-safe:animate-pulse">
-            <div className="h-7 w-40 rounded-full bg-white/10" />
-            <div className="mt-6 h-12 w-4/5 rounded-lg bg-white/15 sm:h-14" />
+            <div className="h-7 w-44 rounded-full bg-white/10" />
+            <div className="mt-6 h-14 w-4/5 rounded-lg bg-white/15 sm:h-16" />
             <div className="mt-4 h-6 w-64 rounded bg-brand-gold/15" />
             <div className="mt-7 h-4 w-full max-w-xl rounded bg-white/10" />
             <div className="mt-3 h-4 w-3/4 max-w-lg rounded bg-white/10" />
             <div className="mt-9 flex gap-3">
-              <div className="h-11 w-28 rounded-full bg-white/10" />
-              <div className="h-11 w-36 rounded-full bg-white/10" />
+              <div className="h-12 w-32 rounded-full bg-white/10" />
+              <div className="h-12 w-40 rounded-full bg-white/10" />
             </div>
           </div>
-          <div className="mx-auto aspect-square w-64 rounded-2xl bg-white/10 motion-safe:animate-pulse sm:w-72 lg:mr-0 lg:w-80" />
+          <div className="mx-auto aspect-square w-64 rounded-[1.75rem] bg-white/10 motion-safe:animate-pulse sm:w-72 lg:mr-0 lg:w-[22rem]" />
         </div>
       </section>
 
-      <main className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16" aria-hidden="true">
+      <div className="px-4 py-14 sm:px-6 lg:px-8 lg:py-20" aria-hidden="true">
         <div className="mx-auto max-w-6xl motion-safe:animate-pulse">
-          <div className="grid gap-8 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-card sm:p-8 lg:grid-cols-[280px_1fr] lg:items-center">
-            <div className="mx-auto aspect-square w-full max-w-[280px] rounded-2xl bg-zinc-200 lg:mx-0" />
+          <div className="grid gap-8 rounded-[1.75rem] border border-zinc-200/70 bg-white p-6 shadow-card sm:p-8 lg:grid-cols-[280px_1fr] lg:items-center">
+            <div className="mx-auto aspect-square w-full max-w-[280px] rounded-[1.5rem] bg-zinc-200 lg:mx-0" />
             <div>
               <div className="h-4 w-32 rounded bg-brand-gold/25" />
               <div className="mt-5 h-8 w-4/5 rounded bg-zinc-200" />
@@ -85,34 +70,30 @@ function PodcastPageSkeleton() {
             </div>
           </div>
 
-          <div className="mb-8 mt-14 flex items-end justify-between gap-4">
+          <div className="mb-8 mt-16 flex items-end justify-between gap-4">
             <div>
               <div className="h-8 w-40 rounded bg-zinc-200" />
               <div className="mt-2 h-4 w-28 rounded bg-zinc-100" />
             </div>
-            <div className="hidden h-11 w-72 rounded-full bg-zinc-200 sm:block" />
+            <div className="hidden h-12 w-80 rounded-full bg-zinc-200 sm:block" />
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             {skeletonCards.map((card) => (
-              <div key={card} className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-card">
+              <div key={card} className="rounded-[1.5rem] border border-zinc-200/70 bg-white p-5 shadow-card">
                 <div className="flex gap-4">
-                  <div className="h-28 w-28 shrink-0 rounded-xl bg-zinc-200 sm:h-32 sm:w-32" />
+                  <div className="h-28 w-28 shrink-0 rounded-2xl bg-zinc-200 sm:h-32 sm:w-32" />
                   <div className="min-w-0 flex-1">
                     <div className="h-3 w-24 rounded bg-zinc-100" />
                     <div className="mt-4 h-5 w-full rounded bg-zinc-200" />
                     <div className="mt-2 h-5 w-4/5 rounded bg-zinc-200" />
                   </div>
                 </div>
-                <div className="mt-5 h-4 w-full rounded bg-zinc-100" />
-                <div className="mt-3 h-4 w-3/4 rounded bg-zinc-100" />
-                <div className="mt-6 h-px bg-zinc-100" />
-                <div className="mt-4 h-9 w-24 rounded-full bg-brand-forest/10" />
               </div>
             ))}
           </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }
@@ -122,9 +103,9 @@ function PodcastFeedError() {
     <section
       role="alert"
       aria-labelledby="feed-error-heading"
-      className="rounded-2xl border border-brand-gold/60 bg-white px-6 py-12 text-center shadow-card sm:px-12"
+      className="rounded-[1.75rem] border border-brand-gold/40 bg-white/80 px-6 py-14 text-center shadow-card backdrop-blur-sm sm:px-12"
     >
-      <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-gold/20 text-brand-gold-dark">
+      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-gold/20 text-brand-gold-dark">
         <AlertTriangle className="h-6 w-6" aria-hidden="true" />
       </span>
       <h2 id="feed-error-heading" className="mt-5 font-display text-2xl font-semibold text-zinc-950">
@@ -164,14 +145,12 @@ async function PodcastPage() {
 function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
   const coverArt = podcastData.podcastImage || FALLBACK_COVER_ART
 
-  // Preconnect to the cover-art CDN origin (priority hero image / LCP).
   let coverOrigin: string | null = null
   try {
     coverOrigin = new URL(coverArt).origin
   } catch {
     coverOrigin = null
   }
-  // episodes are already sorted newest-first (NaN-safe) by the parser.
   const latestEpisode = podcastData.episodes[0]
   const primaryCategory = podcastData.podcastCategories?.at(-1)
   const feedUpdated = formatFeedDate(podcastData.lastBuildDate)
@@ -179,31 +158,31 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "PodcastSeries",
-    "name": podcastData.podcastTitle,
-    "description": podcastData.podcastSummary,
-    "url": SITE_URL,
-    "image": coverArt,
-    "author": {
+    name: podcastData.podcastTitle,
+    description: podcastData.podcastSummary,
+    url: SITE_URL,
+    image: coverArt,
+    author: {
       "@type": "Person",
-      "name": PODCAST_HOSTS
+      name: PODCAST_HOSTS,
     },
-    "publisher": {
+    publisher: {
       "@type": "Person",
-      "name": PODCAST_HOSTS
+      name: PODCAST_HOSTS,
     },
-    "webFeed": podcastData.feedUrl || "https://anchor.fm/s/da593d5c/podcast/rss",
-    "hasPart": podcastData.episodes.map((ep) => ({
+    webFeed: podcastData.feedUrl || RSS_URL,
+    hasPart: podcastData.episodes.map((ep) => ({
       "@type": "PodcastEpisode",
-      "name": ep.title,
-      "description": ep.summary,
-      "datePublished": ep.pubDate,
-      "url": ep.link,
+      name: ep.title,
+      description: ep.summary,
+      datePublished: ep.pubDate,
+      url: ep.link,
       ...(ep.enclosure
         ? {
-            "associatedMedia": {
+            associatedMedia: {
               "@type": "MediaObject",
-              "contentUrl": ep.enclosure.url,
-              "contentType": ep.enclosure.type,
+              contentUrl: ep.enclosure.url,
+              contentType: ep.enclosure.type,
             },
           }
         : {}),
@@ -215,7 +194,6 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
       {coverOrigin && <link rel="preconnect" href={coverOrigin} />}
       <JsonLd data={jsonLd} />
       <section className="relative overflow-hidden bg-brand-forest-dark text-white">
-        {/* Blurred cover art atmosphere from RSS */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           <Image
             src={coverArt}
@@ -223,28 +201,29 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
             fill
             priority
             sizes="100vw"
-            className="hero-art-blur object-cover opacity-40"
+            className="hero-art-blur object-cover opacity-45"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-brand-forest-dark/80 via-brand-forest-dark/90 to-brand-forest-dark" />
-          <div className="grain-overlay absolute inset-0 opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-brand-ink/70 via-brand-forest-dark/85 to-brand-cream" />
+          <div className="grain-overlay absolute inset-0 opacity-70" />
         </div>
 
-        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden="true" />
-        <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-brand-gold/10 blur-3xl" aria-hidden="true" />
+        <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" aria-hidden="true" />
+        <div className="absolute -bottom-16 -right-16 h-80 w-80 rounded-full bg-brand-gold/15 blur-3xl" aria-hidden="true" />
 
-        <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-          <div className="grid gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-16">
+        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <div className="grid gap-14 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-16">
             <div className="animate-fade-up">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-bold uppercase tracking-widest text-brand-gold-light backdrop-blur-sm">
-                <Radio className="h-3.5 w-3.5 animate-pulse-soft" />
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-gold-light backdrop-blur-md">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-gold motion-safe:animate-pulse-soft" />
+                <Radio className="h-3.5 w-3.5" />
                 <span>Travel Talk Radio</span>
               </div>
 
-              <h1 className="font-display text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.5rem]">
-                What Is This Place
+              <h1 className="font-display text-balance text-4xl font-semibold leading-[1.02] tracking-tight sm:text-5xl lg:text-[3.75rem]">
+                What Is This <span className="italic text-brand-gold-light">Place</span>
               </h1>
 
-              <p className="mt-4 flex items-center gap-2 text-lg text-brand-gold-light sm:text-xl">
+              <p className="mt-5 flex items-center gap-2 text-lg text-brand-gold-light sm:text-xl">
                 <Mic2 className="h-5 w-5 shrink-0 text-brand-gold" />
                 <span>
                   with <span className="font-semibold text-white">Neil Real</span> &{" "}
@@ -256,33 +235,33 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
                 {podcastData.podcastSummary}
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-8 flex flex-wrap gap-2.5">
                 {primaryCategory && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200 backdrop-blur-sm">
                     <MapPin className="h-3.5 w-3.5 text-brand-gold" />
                     {primaryCategory}
                   </span>
                 )}
                 {podcastData.episodeCount > 0 && (
-                  <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200">
+                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200 backdrop-blur-sm">
                     {podcastData.episodeCount} episodes
                   </span>
                 )}
                 {latestEpisode && (
-                  <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200">
-                    Latest: {formatEpisodeDate(latestEpisode.pubDate)}
+                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200 backdrop-blur-sm">
+                    Latest {formatEpisodeDate(latestEpisode.pubDate)}
                   </span>
                 )}
                 {feedUpdated && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200 backdrop-blur-sm">
                     <Rss className="h-3.5 w-3.5 text-brand-gold" />
-                    Feed updated {feedUpdated}
+                    Updated {feedUpdated}
                   </span>
                 )}
               </div>
 
               <div className="mt-10">
-                <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Listen on</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">Listen on</p>
                 <div className="mt-3 flex flex-wrap gap-3">
                   {PODCAST_LINKS.map((link) => (
                     <Link
@@ -290,7 +269,7 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`inline-flex min-h-11 items-center gap-2.5 rounded-full px-5 py-2.5 text-sm font-bold shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-forest-dark ${link.bgClass}`}
+                      className={`inline-flex min-h-12 items-center gap-2.5 rounded-full px-5 py-2.5 text-sm font-bold shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-forest-dark ${link.bgClass}`}
                     >
                       <PlatformIcon platform={link.platform} />
                       <span>{link.label}</span>
@@ -301,24 +280,24 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
             </div>
 
             <div className="flex animate-fade-up flex-col items-center lg:items-end [animation-delay:120ms]">
-              <div className="group relative aspect-square w-64 sm:w-72 lg:w-80">
-                <div className="absolute -inset-3 rounded-3xl bg-brand-gold/20 blur-2xl transition-opacity duration-500 group-hover:opacity-80" />
-                <div className="relative aspect-square overflow-hidden rounded-2xl bg-zinc-800 shadow-cover ring-1 ring-white/20 transition-transform duration-500 group-hover:scale-[1.02]">
+              <div className="group relative aspect-square w-64 sm:w-72 lg:w-[22rem]">
+                <div className="absolute -inset-4 rounded-[2rem] bg-brand-gold/25 blur-2xl transition-opacity duration-500 group-hover:opacity-90" />
+                <div className="relative aspect-square overflow-hidden rounded-[1.75rem] bg-zinc-800 shadow-cover ring-2 ring-brand-gold/30 transition-transform duration-500 group-hover:scale-[1.02]">
                   <Image
                     src={coverArt}
                     alt="What Is This Place podcast cover art"
                     fill
                     priority
-                    sizes="(max-width: 768px) 256px, 320px"
+                    sizes="(max-width: 768px) 256px, 352px"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-brand-forest-dark/50 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-brand-ink/55 via-transparent to-transparent" />
                 </div>
               </div>
 
               <blockquote className="mt-8 max-w-xs border-l-2 border-brand-gold pl-4 text-left lg:max-w-sm lg:border-l-0 lg:border-r-2 lg:pl-0 lg:pr-4 lg:text-right">
-                <p className="text-xs font-bold uppercase tracking-widest text-brand-gold">From the road</p>
-                <p className="mt-1.5 font-display text-base italic leading-relaxed text-zinc-300">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-gold">From the road</p>
+                <p className="mt-1.5 font-display text-lg italic leading-relaxed text-zinc-200">
                   &ldquo;Strange places, better questions, and a little static.&rdquo;
                 </p>
               </blockquote>
@@ -327,7 +306,7 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
         </div>
       </section>
 
-      <main className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <section id="episodes" className="relative -mt-6 px-4 pb-16 sm:-mt-10 sm:px-6 lg:px-8 lg:pb-20">
         <div className="mx-auto max-w-6xl">
           {podcastData.episodes.length > 0 ? (
             <PodcastFeed initialData={podcastData} />
@@ -335,7 +314,7 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
             <PodcastFeedError />
           )}
         </div>
-      </main>
+      </section>
     </div>
   )
 }

@@ -15,9 +15,9 @@ interface EpisodeCoverProps {
 }
 
 const sizeClasses = {
-  sm: "h-16 w-16 rounded-lg",
-  md: "h-28 w-28 rounded-xl sm:h-32 sm:w-32",
-  lg: "aspect-square w-full rounded-2xl",
+  sm: "h-16 w-16 rounded-xl",
+  md: "h-28 w-28 rounded-2xl sm:h-32 sm:w-32",
+  lg: "aspect-square w-full rounded-[1.5rem]",
 }
 
 const playButtonSize = {

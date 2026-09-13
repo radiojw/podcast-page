@@ -253,7 +253,13 @@ export default function PodcastPlayer({
     : formatTime(duration)
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-brand-ink/95 text-white shadow-2xl backdrop-blur-xl">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-brand-ink/90 text-white shadow-2xl backdrop-blur-2xl">
+      <div
+        className="absolute inset-x-0 top-0 h-0.5 bg-zinc-800"
+        aria-hidden="true"
+      >
+        <div className="h-full bg-brand-gold" style={{ width: `${sliderValue}%` }} />
+      </div>
       <audio
         ref={audioRef}
         src={activeEpisode.enclosure?.url}
@@ -263,7 +269,7 @@ export default function PodcastPlayer({
         preload="auto"
       />
 
-      <div className="mx-auto max-w-6xl px-4 py-3.5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
           <div className="flex min-w-0 items-center gap-3">
             <EpisodeCover

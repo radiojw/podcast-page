@@ -73,7 +73,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
 
   if (!podcastData.episodes.length) {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white p-12 text-center shadow-card">
+      <div className="rounded-[1.75rem] border border-zinc-200/80 bg-white/80 p-12 text-center shadow-card backdrop-blur-sm">
         <AlertCircle className="mx-auto h-12 w-12 text-zinc-400" />
         <h3 className="mt-4 font-display text-xl font-semibold text-zinc-950">No episodes found</h3>
         <p className="mt-2 text-zinc-600">The podcast feed seems to be empty right now. Please check back later!</p>
@@ -87,8 +87,8 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
   return (
     <div className="pb-[calc(9rem+env(safe-area-inset-bottom))]">
       {!searchTerm && latestEpisode && (
-        <section aria-labelledby="featured-heading" className="mb-14">
-          <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-card transition-shadow duration-300 hover:shadow-card-hover">
+        <section aria-labelledby="featured-heading" className="mb-16">
+          <div className="relative overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/90 shadow-card backdrop-blur-sm transition-shadow duration-300 hover:shadow-card-hover">
             {featuredImage && (
               <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
                 <Image
@@ -108,7 +108,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
               </span>
             </div>
 
-            <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[280px_1fr] lg:items-center">
+            <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[280px_1fr] lg:items-center lg:p-10">
               <EpisodeCover
                 src={featuredImage}
                 alt={latestEpisode.title}
@@ -145,7 +145,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
 
                  <h2
                   id="featured-heading"
-                  className="mt-4 font-display text-balance text-2xl font-semibold leading-tight text-zinc-950 sm:text-3xl flex items-start gap-3 justify-between"
+                  className="mt-5 flex items-start justify-between gap-3 font-display text-balance text-2xl font-semibold leading-tight text-zinc-950 sm:text-3xl"
                 >
                   <span className="flex-grow">
                     <Link
@@ -181,7 +181,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
                   <button
                     type="button"
                     onClick={() => handlePlayPause(latestEpisode)}
-                    className="inline-flex min-h-12 items-center gap-2.5 rounded-full bg-brand-forest px-7 py-3 text-sm font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-brand-forest-light hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2"
+                    className="inline-flex min-h-12 items-center gap-2.5 rounded-full bg-brand-forest px-7 py-3 text-sm font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-brand-forest-light hover:shadow-lg focus:outline-none focus-visible:ring-2 focus:ring-brand-gold focus:ring-offset-2"
                   >
                     {isLatestPlaying ? (
                       <>
@@ -204,7 +204,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
 
       <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-display text-2xl font-semibold text-zinc-950 lg:text-3xl">
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-zinc-950 lg:text-3xl">
             {searchTerm ? "Search Results" : "All Episodes"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
@@ -215,7 +215,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[220px] flex-grow sm:w-72">
+          <div className="relative min-w-[220px] flex-grow sm:w-80">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
             <input
               type="search"
@@ -223,7 +223,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
               aria-label="Search episodes"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-full border border-zinc-200 bg-white py-2.5 pl-10 pr-10 text-sm text-zinc-800 shadow-sm placeholder:text-zinc-400 focus:border-brand-forest focus:outline-none focus:ring-2 focus:ring-brand-forest/20"
+              className="w-full rounded-full border border-zinc-200/80 bg-white/90 py-3 pl-10 pr-10 text-sm text-zinc-800 shadow-sm placeholder:text-zinc-400 focus:border-brand-forest focus:outline-none focus:ring-2 focus:ring-brand-forest/20"
             />
             {searchTerm && (
               <button
@@ -241,7 +241,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
             value={sortBy}
             aria-label="Sort episodes"
             onChange={(e) => setSortBy(e.target.value as "newest" | "oldest")}
-            className="rounded-full border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm focus:border-brand-forest focus:outline-none focus:ring-2 focus:ring-brand-forest/20"
+            className="rounded-full border border-zinc-200/80 bg-white/90 px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm focus:border-brand-forest focus:outline-none focus:ring-2 focus:ring-brand-forest/20"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
@@ -258,7 +258,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
           podcastImage={podcastData.podcastImage}
         />
       ) : (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white/60 p-12 text-center">
+        <div className="rounded-[1.5rem] border border-dashed border-zinc-300 bg-white/70 p-12 text-center">
           <p className="text-zinc-500">No episodes match your search.</p>
           <button
             type="button"
