@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX, X } from "lucide-react"
 import EpisodeCover from "./EpisodeCover"
 import { formatDuration } from "@/lib/formatEpisode"
@@ -252,8 +253,13 @@ export default function PodcastPlayer({
     ? formatDuration(activeEpisode.duration)
     : formatTime(duration)
 
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-brand-ink/90 text-white shadow-2xl backdrop-blur-2xl">
+  const player = (
+    <div
+      data-player="now-playing"
+      role="region"
+      aria-label="Now playing"
+      className="fixed inset-x-0 bottom-0 z-[100] border-t border-white/10 bg-brand-ink/95 text-white shadow-[0_-12px_40px_rgba(0,0,0,0.35)] backdrop-blur-2xl"
+    >
       <div
         className="absolute inset-x-0 top-0 h-0.5 bg-zinc-800"
         aria-hidden="true"
@@ -404,4 +410,7 @@ export default function PodcastPlayer({
       </div>
     </div>
   )
+
+  if (typeof document === "undefined") return player
+  return createPortal(player, document.body)
 }
