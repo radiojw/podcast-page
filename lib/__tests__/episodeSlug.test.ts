@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { slugify, buildEpisodeSlugs, getEpisodeBySlug, withSlugs } from "../episodeSlug"
+import { slugify, buildEpisodeSlugs, getEpisodeBySlug, withSlugs, episodePath, getAdjacentEpisodes } from "../episodeSlug"
 import type { Episode } from "../../types"
 
 const makeEpisode = (guid: string, title: string): Episode => ({
@@ -69,5 +69,31 @@ describe("getEpisodeBySlug / withSlugs", () => {
     const enriched = withSlugs(episodes)
     expect(enriched[0].slug).toBe("first")
     expect(enriched[1].slug).toBe("first-2")
+  })
+})
+
+describe("episodePath / getAdjacentEpisodes", () => {
+  it("builds a site-relative episode path", () => {
+    expect(episodePath("iceland-episode-02")).toBe("/episodes/iceland-episode-02")
+  })
+
+  it("returns newer and older neighbors in newest-first order", () => {
+    const list = withSlugs([
+      makeEpisode("g1", "Newest"),
+      makeEpisode("g2", "Middle"),
+      makeEpisode("g3", "Oldest"),
+    ])
+    expect(getAdjacentEpisodes(list, "middle")).toEqual({
+      newer: list[0],
+      older: list[2],
+    })
+    expect(getAdjacentEpisodes(list, "newest").newer).toBeUndefined()
+    expect(getAdjacentEpisodes(list, "newest").older?.guid).toBe("g2")
+    expect(getAdjacentEpisodes(list, "oldest").older).toBeUndefined()
+  })
+
+  it("returns empty neighbors for an unknown slug", () => {
+    const list = withSlugs([makeEpisode("g1", "Only")])
+    expect(getAdjacentEpisodes(list, "missing")).toEqual({})
   })
 })

@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX, X } from "lucide-react"
+import Link from "next/link"
 import EpisodeCover from "./EpisodeCover"
 import { formatDuration } from "@/lib/formatEpisode"
+import { episodePath } from "@/lib/episodeSlug"
 import { PODCAST_TITLE } from "@/lib/siteConfig"
 import type { Episode } from "../types"
 
@@ -287,7 +289,16 @@ export default function PodcastPlayer({
             />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="truncate text-sm font-bold text-white">{activeEpisode.title}</h3>
+                {activeEpisode.slug ? (
+                  <Link
+                    href={episodePath(activeEpisode.slug)}
+                    className="truncate text-sm font-bold text-white hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
+                  >
+                    {activeEpisode.title}
+                  </Link>
+                ) : (
+                  <h3 className="truncate text-sm font-bold text-white">{activeEpisode.title}</h3>
+                )}
                 {isPlaying && (
                   <span className="flex items-end gap-0.5 h-3 px-1 text-brand-gold shrink-0" aria-hidden="true">
                     <span className="eq-bar eq-bar-1" />

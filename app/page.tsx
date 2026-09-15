@@ -5,7 +5,7 @@ import JsonLd from "@/components/JsonLd"
 import PlatformIcon from "@/components/PlatformIcon"
 import PodcastFeed from "@/components/PodcastFeed"
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
-import { withSlugs, type EpisodeWithSlug } from "@/lib/episodeSlug"
+import { withSlugs, episodePath, type EpisodeWithSlug } from "@/lib/episodeSlug"
 import { formatEpisodeDate, formatFeedDate } from "@/lib/formatEpisode"
 import {
   FALLBACK_COVER_ART,
@@ -171,12 +171,13 @@ function PodcastHome({ podcastData }: { podcastData: PodcastPageData }) {
       name: PODCAST_HOSTS,
     },
     webFeed: podcastData.feedUrl || RSS_URL,
+    sameAs: PODCAST_LINKS.map((link) => link.href),
     hasPart: podcastData.episodes.map((ep) => ({
       "@type": "PodcastEpisode",
       name: ep.title,
       description: ep.summary,
       datePublished: ep.pubDate,
-      url: ep.link,
+      url: `${SITE_URL}${episodePath(ep.slug)}`,
       ...(ep.enclosure
         ? {
             associatedMedia: {

@@ -1,0 +1,17 @@
+{
+  "name": "What Is This Place",
+  "short_name": "WITP",
+  "description": "Travel talk radio with Neil Real and Shredz Pali.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3efe8",
+  "theme_color": "#143833",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

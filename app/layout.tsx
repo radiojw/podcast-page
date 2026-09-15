@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import type React from "react"
 import { Fraunces, Source_Sans_3 } from "next/font/google"
 import Footer from "@/components/Footer"
+import { PlayerProvider } from "@/components/PlayerProvider"
 import SiteHeader from "@/components/SiteHeader"
 import { RSS_URL, FALLBACK_COVER_ART } from "@/lib/rssConstants"
 import { SITE_URL, PODCAST_HOSTS } from "@/lib/siteConfig"
@@ -19,6 +20,10 @@ const sourceSans = Source_Sans_3({
   display: "swap",
 })
 
+export const viewport = {
+  themeColor: "#143833",
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: `What Is This Place? w/ ${PODCAST_HOSTS} - Travel Podcast`,
@@ -35,6 +40,11 @@ export const metadata: Metadata = {
     "what is this place",
   ],
   authors: [{ name: PODCAST_HOSTS }],
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: "/icon.svg",
+  },
+  manifest: "/site.webmanifest",
   alternates: {
     canonical: "/",
     types: {
@@ -78,10 +88,12 @@ export default function RootLayout({
       </head>
       <body className={`${fraunces.variable} ${sourceSans.variable} font-sans flex min-h-screen flex-col antialiased`}>
         <SiteHeader />
-        <div id="main-content" className="flex-grow" tabIndex={-1}>
-          {children}
-        </div>
-        <Footer />
+        <PlayerProvider>
+          <div id="main-content" className="flex-grow" tabIndex={-1}>
+            {children}
+          </div>
+          <Footer />
+        </PlayerProvider>
       </body>
     </html>
   )

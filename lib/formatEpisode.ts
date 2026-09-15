@@ -69,6 +69,47 @@ export function formatDuration(duration?: string) {
   return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`
 }
 
+/** Convert an RSS duration (seconds or h:mm:ss) into schema.org ISO-8601. */
+export function durationToIso8601(duration?: string): string | undefined {
+  if (!duration) return undefined
+
+  const value = duration.trim()
+  if (!value) return undefined
+
+  let totalSeconds: number | null = null
+
+  if (value.includes(":")) {
+    const parts = value.split(":").map((part) => part.trim())
+    if (!parts.every((part) => /^\d{1,4}$/.test(part))) {
+      return undefined
+    }
+    const nums = parts.map(Number)
+    if (parts.length === 3) {
+      totalSeconds = nums[0] * 3600 + nums[1] * 60 + nums[2]
+    } else if (parts.length === 2) {
+      totalSeconds = nums[0] * 60 + nums[1]
+    } else {
+      return undefined
+    }
+  } else if (/^\d{1,8}$/.test(value)) {
+    totalSeconds = Number.parseInt(value, 10)
+  } else {
+    return undefined
+  }
+
+  if (totalSeconds === null || !Number.isFinite(totalSeconds) || totalSeconds < 0) {
+    return undefined
+  }
+
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  if (hours > 0) return `PT${hours}H${minutes}M${seconds}S`
+  if (minutes > 0) return `PT${minutes}M${seconds}S`
+  return `PT${seconds}S`
+}
+
 export function extractEpisodeNumber(title: string) {
   const match = title.match(/(?:episode|ep\.?)\s*(\d+)/i)
   return match ? match[1] : null

@@ -17,6 +17,14 @@ html {
   scroll-padding-top: 4.5rem;
 }
 
+html[data-player-open] {
+  scroll-padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+}
+
+html[data-player-open] body {
+  padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+}
+
 body {
   margin: 0;
   background: var(--brand-cream);

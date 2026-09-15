@@ -32,6 +32,12 @@ export default async function Footer() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/about"
+            className="rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-sm font-semibold text-brand-gold-light transition-colors hover:bg-white/10 hover:text-brand-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-ink"
+          >
+            About
+          </Link>
           {PODCAST_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -56,8 +62,9 @@ export default async function Footer() {
         </div>
       </div>
 
-      <div className="relative mx-auto mt-10 max-w-6xl border-t border-white/10 pt-6 text-sm text-zinc-500">
-        &copy; {new Date().getFullYear()} What Is This Place. All rights reserved.
+      <div className="relative mx-auto mt-10 flex max-w-6xl flex-col gap-2 border-t border-white/10 pt-6 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+        <p>&copy; {new Date().getFullYear()} What Is This Place. All rights reserved.</p>
+        <p>Analytics are first-party and stay on this site.</p>
       </div>
     </footer>
   )
