@@ -51,3 +51,27 @@ export function getEpisodeBySlug(episodes: Episode[], slug: string): Episode | u
   const slugs = buildEpisodeSlugs(episodes)
   return episodes.find((episode) => slugs.get(episode.guid) === slug)
 }
+
+/** Site-relative path for an episode detail page. */
+export function episodePath(slug: string): string {
+  return `/episodes/${slug}`
+}
+
+/**
+ * Adjacent episodes in newest-first list order.
+ * `newer` is more recently published; `older` is further back in the archive.
+ */
+export function getAdjacentEpisodes(
+  episodes: EpisodeWithSlug[],
+  slug: string
+): { newer?: EpisodeWithSlug; older?: EpisodeWithSlug } {
+  const index = episodes.findIndex((episode) => episode.slug === slug)
+  if (index < 0) {
+    return {}
+  }
+
+  return {
+    newer: index > 0 ? episodes[index - 1] : undefined,
+    older: episodes[index + 1],
+  }
+}

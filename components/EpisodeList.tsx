@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Play, Pause, Calendar, Clock, Share2, Check, ExternalLink } from "lucide-react"
+import { Play, Pause, Calendar, Clock, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import EpisodeCover from "./EpisodeCover"
 import EpisodeSummary from "./EpisodeSummary"
+import ShareEpisodeButton from "./ShareEpisodeButton"
 import {
   formatEpisodeDate,
   formatDuration,
@@ -29,27 +29,6 @@ export default function EpisodeList({
   onPlayPause,
   podcastImage,
 }: EpisodeListProps) {
-  const [copiedId, setCopiedId] = useState<string | null>(null)
-
-  // Auto-dismiss the "copied" confirmation; cleans up if the component
-  // unmounts or another copy happens before the timer fires.
-  useEffect(() => {
-    if (!copiedId) return
-    const timer = setTimeout(() => setCopiedId(null), 2000)
-    return () => clearTimeout(timer)
-  }, [copiedId])
-
-  const handleShare = async (e: React.MouseEvent, episode: Episode) => {
-    e.preventDefault()
-    e.stopPropagation()
-    try {
-      await navigator.clipboard.writeText(episode.link)
-      setCopiedId(episode.guid)
-    } catch (err) {
-      console.error("Failed to copy link:", err)
-    }
-  }
-
   return (
     <div className="grid gap-5 sm:grid-cols-2">
       {episodes.map((episode) => {
@@ -165,40 +144,12 @@ export default function EpisodeList({
                   </Link>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={(e) => handleShare(e, episode)}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
-                  title="Copy link to clipboard"
-                >
-                  {copiedId === episode.guid ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-emerald-600" />
-                      <span className="text-emerald-600">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="h-3.5 w-3.5" />
-                      <span>Share</span>
-                    </>
-                  )}
-                </button>
+                <ShareEpisodeButton slug={episode.slug} title={episode.title} guid={episode.guid} />
               </div>
             </div>
           </article>
         )
       })}
-
-      {copiedId && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-28 left-6 z-50 flex items-center gap-2 rounded-xl bg-zinc-950/95 border border-white/10 px-4 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 fade-in duration-300"
-        >
-          <Check className="h-4 w-4 text-brand-gold" />
-          <span>Episode link copied to clipboard!</span>
-        </div>
-      )}
     </div>
   )
 }

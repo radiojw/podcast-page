@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { compareByPubDate, formatDuration, formatFileSize } from "../formatEpisode"
+import { compareByPubDate, durationToIso8601, formatDuration, formatFileSize } from "../formatEpisode"
 
 const ep = (pubDate: string) => ({ pubDate })
 
@@ -48,6 +48,26 @@ describe("formatDuration", () => {
     expect(formatDuration("12:34:56:78")).toBe("")
     expect(formatDuration("1e10")).toBe("")
     expect(formatDuration("-30")).toBe("")
+  })
+})
+
+describe("durationToIso8601", () => {
+  it("converts raw seconds", () => {
+    expect(durationToIso8601("1830")).toBe("PT30M30S")
+  })
+
+  it("converts hh:mm:ss", () => {
+    expect(durationToIso8601("01:02:03")).toBe("PT1H2M3S")
+  })
+
+  it("converts mm:ss", () => {
+    expect(durationToIso8601("42:10")).toBe("PT42M10S")
+  })
+
+  it("returns undefined for missing or untrusted values", () => {
+    expect(durationToIso8601(undefined)).toBeUndefined()
+    expect(durationToIso8601("<script>")).toBeUndefined()
+    expect(durationToIso8601("1h 2m")).toBeUndefined()
   })
 })
 

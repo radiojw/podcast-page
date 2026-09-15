@@ -2,13 +2,15 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, Calendar, Clock, ExternalLink } from "lucide-react"
+import { ArrowLeft, ArrowRight, Calendar, Clock, Download, ExternalLink } from "lucide-react"
 import { fetchPodcastData } from "@/lib/fetchPodcastData"
-import { buildEpisodeSlugs, getEpisodeBySlug } from "@/lib/episodeSlug"
-import { formatEpisodeDate, formatDuration, formatFileSize, getEpisodeLabel } from "@/lib/formatEpisode"
+import { buildEpisodeSlugs, episodePath, getAdjacentEpisodes, getEpisodeBySlug, withSlugs } from "@/lib/episodeSlug"
+import { durationToIso8601, formatEpisodeDate, formatDuration, formatFileSize, getEpisodeLabel } from "@/lib/formatEpisode"
 import { FALLBACK_COVER_ART } from "@/lib/rssConstants"
 import { SITE_URL, PODCAST_TITLE } from "@/lib/siteConfig"
 import JsonLd from "@/components/JsonLd"
+import PlayEpisodeButton from "@/components/PlayEpisodeButton"
+import ShareEpisodeButton from "@/components/ShareEpisodeButton"
 
 export const dynamicParams = false
 
@@ -60,6 +62,7 @@ export default async function EpisodePage({
 }) {
   const { slug } = await params
   const podcastData = await fetchPodcastData()
+  const episodes = withSlugs(podcastData.episodes)
   const episode = getEpisodeBySlug(podcastData.episodes, slug)
 
   if (!episode) {
@@ -68,6 +71,9 @@ export default async function EpisodePage({
 
   const image = episode.imageUrl || podcastData.podcastImage || FALLBACK_COVER_ART
   const label = getEpisodeLabel(episode)
+  const { newer, older } = getAdjacentEpisodes(episodes, slug)
+
+  const isoDuration = durationToIso8601(episode.duration)
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -75,19 +81,22 @@ export default async function EpisodePage({
     name: episode.title,
     description: episode.summary,
     datePublished: episode.pubDate,
-    url: `${SITE_URL}/episodes/${slug}`,
+    url: `${SITE_URL}${episodePath(slug)}`,
     image,
     partOfSeries: {
       "@type": "PodcastSeries",
       name: PODCAST_TITLE,
       url: SITE_URL,
     },
+    ...(episode.episodeNumber ? { episodeNumber: episode.episodeNumber } : {}),
+    ...(isoDuration ? { timeRequired: isoDuration } : {}),
     ...(episode.enclosure
       ? {
           associatedMedia: {
             "@type": "MediaObject",
             contentUrl: episode.enclosure.url,
             contentType: episode.enclosure.type,
+            ...(isoDuration ? { duration: isoDuration } : {}),
           },
         }
       : {}),
@@ -138,28 +147,96 @@ export default async function EpisodePage({
           </div>
 
           {episode.enclosure && (
-            <div className="mt-10 rounded-[1.5rem] border border-zinc-200/70 bg-white p-4 shadow-card sm:p-5">
-              <audio controls preload="none" src={episode.enclosure.url} className="w-full">
-                Your browser does not support the audio element.
-              </audio>
+            <div className="mt-10 flex flex-wrap items-center gap-3">
+              <PlayEpisodeButton episode={{ ...episode, slug }} />
+              <Link
+                href={episode.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-5 py-2.5 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
+              >
+                <span>Spotify</span>
+                <ExternalLink className="h-4 w-4" />
+              </Link>
+              <ShareEpisodeButton
+                slug={slug}
+                title={episode.title}
+                guid={episode.guid}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-5 py-2.5 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
+              />
+              <a
+                href={episode.enclosure.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-5 py-2.5 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
+              >
+                <Download className="h-4 w-4" />
+                <span>Audio file</span>
+              </a>
             </div>
           )}
 
-          <div className="mt-8">
-            <Link
-              href={episode.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-forest px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-brand-forest-light hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
-            >
-              <span>Listen on Spotify</span>
-              <ExternalLink className="h-4 w-4" />
-            </Link>
-          </div>
+          {!episode.enclosure && (
+            <div className="mt-10 flex flex-wrap items-center gap-3">
+              <Link
+                href={episode.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-forest px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-brand-forest-light hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+              >
+                <span>Listen on Spotify</span>
+                <ExternalLink className="h-4 w-4" />
+              </Link>
+              <ShareEpisodeButton
+                slug={slug}
+                title={episode.title}
+                guid={episode.guid}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-5 py-2.5 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
+              />
+            </div>
+          )}
 
           <div className="mt-10 whitespace-pre-line text-lg leading-8 text-zinc-700">
             {episode.summary}
           </div>
+
+          {(newer || older) && (
+            <nav
+              aria-label="Nearby episodes"
+              className="mt-14 grid gap-3 border-t border-zinc-200/80 pt-8 sm:grid-cols-2"
+            >
+              {older ? (
+                <Link
+                  href={`/episodes/${older.slug}`}
+                  className="group rounded-[1.25rem] border border-zinc-200/80 bg-white p-4 shadow-sm transition-colors hover:border-brand-forest/30 hover:bg-brand-parchment/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest"
+                >
+                  <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-zinc-400">
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Older
+                  </p>
+                  <p className="mt-1 font-display text-base font-semibold text-zinc-900 group-hover:text-brand-forest">
+                    {older.title}
+                  </p>
+                </Link>
+              ) : (
+                <div />
+              )}
+              {newer ? (
+                <Link
+                  href={`/episodes/${newer.slug}`}
+                  className="group rounded-[1.25rem] border border-zinc-200/80 bg-white p-4 text-right shadow-sm transition-colors hover:border-brand-forest/30 hover:bg-brand-parchment/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest sm:justify-self-end"
+                >
+                  <p className="flex items-center justify-end gap-1 text-[11px] font-bold uppercase tracking-widest text-zinc-400">
+                    Newer
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </p>
+                  <p className="mt-1 font-display text-base font-semibold text-zinc-900 group-hover:text-brand-forest">
+                    {newer.title}
+                  </p>
+                </Link>
+              ) : null}
+            </nav>
+          )}
         </article>
       </div>
     </div>

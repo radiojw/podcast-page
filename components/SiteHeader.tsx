@@ -29,9 +29,15 @@ export default function SiteHeader() {
         <nav aria-label="Listen" className="flex items-center gap-1 sm:gap-2">
           <Link
             href="/#episodes"
-            className="hidden rounded-full px-3 py-1.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold sm:inline-flex"
+            className="rounded-full px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold sm:px-3 sm:text-sm"
           >
             Episodes
+          </Link>
+          <Link
+            href="/about"
+            className="rounded-full px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold sm:px-3 sm:text-sm"
+          >
+            About
           </Link>
           {PODCAST_LINKS.map((link) => (
             <Link

@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Search, Sparkles, AlertCircle, Play, Pause, Calendar, Clock, X } from "lucide-react"
 import EpisodeList from "./EpisodeList"
-import PodcastPlayer from "./PodcastPlayer"
 import EpisodeCover from "./EpisodeCover"
 import EpisodeSummary from "./EpisodeSummary"
+import ShareEpisodeButton from "./ShareEpisodeButton"
+import { usePlayer } from "./PlayerProvider"
 import {
   formatEpisodeDate,
   formatDuration,
@@ -23,8 +24,29 @@ type FeedData = Omit<PodcastData, "episodes"> & { episodes: EpisodeWithSlug[] }
 export default function PodcastFeed({ initialData: podcastData }: { initialData: FeedData }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest")
-  const [activeEpisode, setActiveEpisode] = useState<Episode | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const searchRef = useRef<HTMLInputElement>(null)
+  const { activeEpisode, isPlaying, playPause, setPodcastImage } = usePlayer()
+
+  useEffect(() => {
+    setPodcastImage(podcastData.podcastImage)
+  }, [podcastData.podcastImage, setPodcastImage])
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return
+      const el = e.target as HTMLElement | null
+      if (
+        el &&
+        (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable)
+      ) {
+        return
+      }
+      e.preventDefault()
+      searchRef.current?.focus()
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [])
 
   const filteredEpisodes = useMemo(() => {
     let result = [...podcastData.episodes]
@@ -57,18 +79,11 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
     return filteredEpisodes
   }, [filteredEpisodes, latestEpisode, searchTerm])
 
-  // Stable identity so the player's keyboard/Media Session effects don't
-  // re-subscribe on unrelated re-renders (e.g. every search keystroke).
   const handlePlayPause = useCallback(
     (episode: Episode) => {
-      if (activeEpisode?.guid === episode.guid) {
-        setIsPlaying((playing) => !playing)
-      } else {
-        setActiveEpisode(episode)
-        setIsPlaying(true)
-      }
+      playPause(episode)
     },
-    [activeEpisode?.guid]
+    [playPause]
   )
 
   if (!podcastData.episodes.length) {
@@ -85,7 +100,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
   const featuredImage = latestEpisode?.imageUrl || podcastData.podcastImage
 
   return (
-    <div className="pb-[calc(9rem+env(safe-area-inset-bottom))]">
+    <div>
       {!searchTerm && latestEpisode && (
         <section aria-labelledby="featured-heading" className="mb-16">
           <div className="relative overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/90 shadow-card backdrop-blur-sm transition-shadow duration-300 hover:shadow-card-hover">
@@ -177,7 +192,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
                   />
                 </div>
 
-                <div className="mt-7">
+                <div className="mt-7 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
                     onClick={() => handlePlayPause(latestEpisode)}
@@ -195,6 +210,12 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
                       </>
                     )}
                   </button>
+                  <ShareEpisodeButton
+                    slug={latestEpisode.slug}
+                    title={latestEpisode.title}
+                    guid={latestEpisode.guid}
+                    className="inline-flex min-h-12 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-5 py-3 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-forest focus-visible:ring-offset-2"
+                  />
                 </div>
               </div>
             </div>
@@ -218,6 +239,7 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
           <div className="relative min-w-[220px] flex-grow sm:w-80">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
             <input
+              ref={searchRef}
               type="search"
               placeholder="Search episodes..."
               aria-label="Search episodes"
@@ -269,17 +291,6 @@ export default function PodcastFeed({ initialData: podcastData }: { initialData:
           </button>
         </div>
       )}
-
-      <PodcastPlayer
-        activeEpisode={activeEpisode}
-        isPlaying={isPlaying}
-        onPlayPause={handlePlayPause}
-        onClose={() => {
-          setActiveEpisode(null)
-          setIsPlaying(false)
-        }}
-        podcastImage={podcastData.podcastImage}
-      />
     </div>
   )
 }
